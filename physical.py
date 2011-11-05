@@ -14,10 +14,17 @@ class PartitionInfo:
 class Partition:
     """Storage for the binary image of a complete partition"""
     def __init__(self, mapped_file, partition_info):
+        self._mmap = mapped_file
         self.partition_info = partition_info
         start_byte = 512*partition_info.lba_first_sector
         end_byte   = start_byte + 512*partition_info.sectors_in_partition
-        self.partition = mapped_file[ start_byte:end_byte ]
+        self.start_byte = start_byte
+
+    def __getitem__(self, key):
+        if type(key)==slice:
+            return self._mmap[ self.start_byte + key.start : self.start_byte + key.stop ]
+        else:
+            return self._mmap[ self.start_byte + key ]
 
 class FileInfo:
     def __init__(self):
@@ -61,8 +68,8 @@ class Ext2Partition(Partition):
     def __init__(self, mapped_file, partition_info):
         Partition.__init__(self, mapped_file, partition_info)
 
-        self.s_inodes_count = char2dword(self.partition[1024:1028])
-        self.s_blocks_count = char2dword(self.partition[1028:1032])
+        self.s_inodes_count = char2dword(self[1024:1028])
+        self.s_blocks_count = char2dword(self[1028:1032])
 
 #####################################################################################################
 
