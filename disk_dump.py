@@ -16,29 +16,15 @@ def main():
         hd.get_partition_info(i).dump()
     
     ####################################################################################
-    # jump to the Ext2
-    ext2 = hd.get_filesystem(0)
 
-    print "Number of INodes: %u" % ext2.s_inodes_count
-    print "Number of Blocks: %u" % ext2.s_blocks_count
+    fs = hd.get_filesystem(1)
+    fs.dump()
 
     ####################################################################################
     # jump to the FAT
 
     #fat16 = hd.get_filesystem(1)
-    #
-    #print ""
-    #print "Content of the FAT:"
-    #
-    #print "OEM Name: %s" % fat16.oem_name
-    #print "Bytes per sector: %u" % fat16.bytes_per_sector
-    #print "Sectors per cluster: %u" % fat16.sectors_per_cluster
-    #print "Reserved sectors: %u" % fat16.reserved_sectors
-    #print "Number of FATs: %u" % fat16.number_of_fats
-    #print "Sectors per FAT: %u" % fat16.sectors_per_fat
-    #print "Maximum number of root directory entries: %u" % fat16.max_root_dir_entries
-    #print "Start byte of data: %u" % fat16.start_of_data
-    #
+
     #####################################################################################
     ## jump to the root directory
 

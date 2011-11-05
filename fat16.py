@@ -1,5 +1,5 @@
 import physical
-import os
+import os, sys
 from tools import *
 
 #####################################################################################################
@@ -104,6 +104,18 @@ class FAT16Filesystem:
             i += 1
             fi = FAT16FileInfo()
             fi.parse_entry(self, self.partition[root_directory_start + i*32 : root_directory_start + (i+1)*32])
+
+    def dump(self, fd=sys.stdout):
+        fd.write("Content of the FAT:\n")
+
+        fd.write("OEM Name: %s\n" % self.oem_name)
+        fd.write("Bytes per sector: %u\n" % self.bytes_per_sector)
+        fd.write("Sectors per cluster: %u\n" % self.sectors_per_cluster)
+        fd.write("Reserved sectors: %u\n" % self.reserved_sectors)
+        fd.write("Number of FATs: %u\n" % self.number_of_fats)
+        fd.write("Sectors per FAT: %u\n" % self.sectors_per_fat)
+        fd.write("Maximum number of root directory entries: %u\n" % self.max_root_dir_entries)
+        fd.write("Start byte of data: %u\n" % self.start_of_data)
 
     def get_fat_entry(self, fat_no = 0, fat_entry = 0):
         fat_start = 512*self.reserved_sectors + fat_no*(512*self.sectors_per_fat)
