@@ -221,12 +221,12 @@ class Harddisk:
         self._image.seek(0)
         mbr = self._mmap[0:512]
 
-        self.partitions = [ mbr[446 + i*16: 446 + (i+1)*16] for i in range(4) ]
+        self.partition_records = [ mbr[446 + i*16: 446 + (i+1)*16] for i in range(4) ]
         self.disk_signature = char2dword( mbr[440:444] )
         self.mbr_signature  = char2word( mbr[510:512] )
 
     def get_partition_info(self, partition_number):
-        return PartitionInfo( self.partitions[partition_number] )
+        return PartitionInfo( self.partition_records[partition_number] )
 
     def get_partition(self, partition_number):
         pi = self.get_partition_info(partition_number)
