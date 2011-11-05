@@ -5,9 +5,8 @@ spt = 63 # for the c50m.img
 
 def main():
     import sys
-    image = open(sys.argv[1], "rb")
     
-    hd = Harddisk(sys.argv[1])
+    hd = Harddisk(sys.argv[1], "a")
     partitions = [ hd.get_partition_info(i) for i in range(4) ]
     
     print "Disk signature: %X" % hd.disk_signature
@@ -37,7 +36,7 @@ def main():
     ####################################################################################
     # jump to the FAT
 
-    #fat16 = FAT16Partition(image, partitions[1])
+    #fat16 = hd.get_partition(1)
     #
     #print ""
     #print "Content of the FAT:"

@@ -208,13 +208,18 @@ class Ext2Partition(Partition):
 #####################################################################################################
 
 class Harddisk:
-    def __init__(self, file_name):
-        self._image = open(file_name, "rb")
+    def __init__(self, file_name, mode="r"):
+        if not mode in ["r", "a"]:
+            raise ValueError("mode string must be one of 'r', 'a', not '%s'" % mode)
+        import mmap
+        self._image = open(file_name, mode+"+b")
+        mmap_access = { "r" : mmap.ACCESS_READ, "a" : mmap.ACCESS_WRITE }[mode]
+        self._mmap = mmap.mmap(self._image.fileno(), 0, access=mmap_access)
         self._parse_partition_table()
 
     def _parse_partition_table(self):
         self._image.seek(0)
-        mbr = self._image.read(512)
+        mbr = self._mmap[0:512]
 
         self.partitions = [ mbr[446 + i*16: 446 + (i+1)*16] for i in range(4) ]
         self.disk_signature = char2dword( mbr[440:444] )
@@ -222,4 +227,11 @@ class Harddisk:
 
     def get_partition_info(self, partition_number):
         return PartitionInfo( self.partitions[partition_number] )
+
+    def get_partition(self, partition_number):
+        pi = self.get_partition_info(partition_number)
+        if pi.type==6:
+            return FAT16Partition(self._image, pi)
+        else:
+            return Partition(self._image, pi)
         
