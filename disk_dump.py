@@ -28,7 +28,7 @@ def main():
     
     ####################################################################################
     # jump to the Ext2
-    ext2 = Ext2Partition(image, partitions[0])
+    ext2 = hd.get_partition(1) #Ext2Partition(image, partitions[0])
 
     print "Number of INodes: %u" % ext2.s_inodes_count
     print "Number of Blocks: %u" % ext2.s_blocks_count
@@ -84,9 +84,6 @@ def main():
     #data = f.read()
     #test.write(data)
     #test.close()
-
-    
-    image.close()
 
 if __name__=="__main__":
     main()
