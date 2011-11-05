@@ -64,12 +64,12 @@ class FileHandle:
 
 #####################################################################################################
 
-class Ext2Partition(Partition):
-    def __init__(self, mapped_file, partition_info):
-        Partition.__init__(self, mapped_file, partition_info)
+class Ext2Filesystem:
+    def __init__(self, partition):
+        self.partition = partition
 
-        self.s_inodes_count = char2dword(self[1024:1028])
-        self.s_blocks_count = char2dword(self[1028:1032])
+        self.s_inodes_count = char2dword(self.partition[1024:1028])
+        self.s_blocks_count = char2dword(self.partition[1028:1032])
 
 #####################################################################################################
 
@@ -96,12 +96,17 @@ class Harddisk:
 
     def get_partition(self, partition_number):
         pi = self.get_partition_info(partition_number)
+        return Partition(self._mmap, pi)
+
+    def get_filesystem(self, partition_number):
+        pi = self.get_partition_info(partition_number)
         if pi.type==6:
-            from fat16 import FAT16Partition
-            return FAT16Partition(self._mmap, pi)
+            from fat16 import FAT16Filesystem
+            return FAT16Filesystem( self.get_partition(partition_number) )
         elif pi.type==0x83:
             # TODO 0x83 is official not always just Ext2, need a cleverer detection
-            return Ext2Partition(self._mmap, pi)
+            return Ext2Filesystem( self.get_partition(partition_number) )
         else:
-            return Partition(self._mmap, pi)
+            raise "No filesystem implementation for type %u" % pi.type
+        
         

@@ -78,17 +78,17 @@ class FAT16FileHandle(physical.FileHandle):
     def write(self, s):
         pass
     
-class FAT16Partition(physical.Partition):
-    def __init__(self, mapped_file, partition_info):
-        physical.Partition.__init__(self, mapped_file, partition_info)
+class FAT16Filesystem:
+    def __init__(self, partition):
+        self.partition = partition
 
-        self.oem_name             = self[3:11]
-        self.bytes_per_sector     = char2word(self[11:13])
-        self.sectors_per_cluster  = ord(self[13])
-        self.reserved_sectors     = char2word(self[14:16])
-        self.number_of_fats       = ord(self[16])
-        self.max_root_dir_entries = char2word(self[17:19])
-        self.sectors_per_fat      = char2word(self[22:24])
+        self.oem_name             = self.partition[3:11]
+        self.bytes_per_sector     = char2word(self.partition[11:13])
+        self.sectors_per_cluster  = ord(self.partition[13])
+        self.reserved_sectors     = char2word(self.partition[14:16])
+        self.number_of_fats       = ord(self.partition[16])
+        self.max_root_dir_entries = char2word(self.partition[17:19])
+        self.sectors_per_fat      = char2word(self.partition[22:24])
 
         # calculate the byte address of cluster 2
         self.start_of_data = 512 * (self.number_of_fats*self.sectors_per_fat + 1 ) # root directory start
@@ -98,16 +98,16 @@ class FAT16Partition(physical.Partition):
         root_directory_start = 512 * ( self.number_of_fats*self.sectors_per_fat+1 )
         i = 0
         fi = FAT16FileInfo()
-        fi.parse_entry(self, self[root_directory_start + i*32 : root_directory_start + (i+1)*32])
+        fi.parse_entry(self, self.partition[root_directory_start + i*32 : root_directory_start + (i+1)*32])
         while ord(fi.filename[0]) != 0:
             self.root_entries[fi.filename] = fi
             i += 1
             fi = FAT16FileInfo()
-            fi.parse_entry(self, self[root_directory_start + i*32 : root_directory_start + (i+1)*32])
+            fi.parse_entry(self, self.partition[root_directory_start + i*32 : root_directory_start + (i+1)*32])
 
     def get_fat_entry(self, fat_no = 0, fat_entry = 0):
         fat_start = 512*self.reserved_sectors + fat_no*(512*self.sectors_per_fat)
-        return char2word( self[ fat_start + 2*fat_entry : fat_start + 2*fat_entry + 2] )
+        return char2word( self.partition[ fat_start + 2*fat_entry : fat_start + 2*fat_entry + 2] )
 
     def listdir(self, directory):
         pass

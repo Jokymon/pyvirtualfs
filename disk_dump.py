@@ -28,7 +28,7 @@ def main():
     
     ####################################################################################
     # jump to the Ext2
-    ext2 = hd.get_partition(1) #Ext2Partition(image, partitions[0])
+    ext2 = hd.get_filesystem(0)
 
     print "Number of INodes: %u" % ext2.s_inodes_count
     print "Number of Blocks: %u" % ext2.s_blocks_count
@@ -36,7 +36,7 @@ def main():
     ####################################################################################
     # jump to the FAT
 
-    #fat16 = hd.get_partition(1)
+    #fat16 = hd.get_filesystem(1)
     #
     #print ""
     #print "Content of the FAT:"
