@@ -79,8 +79,8 @@ class FAT16FileHandle(physical.FileHandle):
         pass
     
 class FAT16Partition(physical.Partition):
-    def __init__(self, image_fd, partition_info):
-        physical.Partition.__init__(self, image_fd, partition_info)
+    def __init__(self, mapped_file, partition_info):
+        physical.Partition.__init__(self, mapped_file, partition_info)
 
         self.oem_name             = self.partition[3:11]
         self.bytes_per_sector     = char2word(self.partition[11:13])

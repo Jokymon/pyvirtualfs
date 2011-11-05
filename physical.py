@@ -13,10 +13,11 @@ class PartitionInfo:
 
 class Partition:
     """Storage for the binary image of a complete partition"""
-    def __init__(self, image_fd, partition_info):
+    def __init__(self, mapped_file, partition_info):
         self.partition_info = partition_info
-        image_fd.seek( 512 * partition_info.lba_first_sector )
-        self.partition = image_fd.read( 512 * partition_info.sectors_in_partition )
+        start_byte = 512*partition_info.lba_first_sector
+        end_byte   = start_byte + 512*partition_info.sectors_in_partition
+        self.partition = mapped_file[ start_byte:end_byte ]
 
 class FileInfo:
     def __init__(self):
@@ -57,8 +58,8 @@ class FileHandle:
 #####################################################################################################
 
 class Ext2Partition(Partition):
-    def __init__(self, image_fd, partition_info):
-        Partition.__init__(self, image_fd, partition_info)
+    def __init__(self, mapped_file, partition_info):
+        Partition.__init__(self, mapped_file, partition_info)
 
         self.s_inodes_count = char2dword(self.partition[1024:1028])
         self.s_blocks_count = char2dword(self.partition[1028:1032])
@@ -90,10 +91,10 @@ class Harddisk:
         pi = self.get_partition_info(partition_number)
         if pi.type==6:
             from fat16 import FAT16Partition
-            return FAT16Partition(self._image, pi)
+            return FAT16Partition(self._mmap, pi)
         elif pi.type==0x83:
             # TODO 0x83 is official not always just Ext2, need a cleverer detection
-            return Ext2Partition(self._image, pi)
+            return Ext2Partition(self._mmap, pi)
         else:
-            return Partition(self._image, pi)
+            return Partition(self._mmap, pi)
         
