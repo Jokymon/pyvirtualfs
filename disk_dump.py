@@ -7,24 +7,13 @@ def main():
     import sys
     
     hd = Harddisk(sys.argv[1], "a")
-    partitions = [ hd.get_partition_info(i) for i in range(4) ]
     
     print "Disk signature: %X" % hd.disk_signature
     print "MBR signature: %X" % hd.mbr_signature
     for i in range(4):
         print "----------------------------------------------"
         print "Partition %u" % i
-        if partitions[i].bootable==0x80:
-            print "  bootable"
-        elif partitions[i].bootable==0x0:
-            print "  non bootable"
-        else:
-            print "  invalid"
-        print "  CHS of first absolute sector (%u, %u, %u)" % partitions[i].chs_first_sector
-        print "  Type: %x" % partitions[i].type
-        print "  CHS of last absolute sector (%u, %u, %u)" % partitions[i].chs_last_sector
-        print "  LBA of first absolute sector n partition: %u" % partitions[i].lba_first_sector
-        print "  Number of sectors in partition: %u" % partitions[i].sectors_in_partition
+        hd.get_partition_info(i).dump()
     
     ####################################################################################
     # jump to the Ext2

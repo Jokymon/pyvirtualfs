@@ -1,4 +1,4 @@
-import os
+import os, sys
 from tools import *
 
 class PartitionInfo:
@@ -10,6 +10,19 @@ class PartitionInfo:
         self.chs_last_sector      = char2chs(entry[5:8])
         self.lba_first_sector     = char2dword(entry[8:12])
         self.sectors_in_partition = char2dword(entry[12:16])
+
+    def dump(self, fd=sys.stdout):
+        if self.bootable==0x80:
+            fd.write("  bootable\n")
+        elif self.bootable==0x0:
+            fd.write("  non bootable\n")
+        else:
+            fd.write("  invalid\n")
+        fd.write("  CHS of first absolute sector (%u, %u, %u)\n" % self.chs_first_sector)
+        fd.write("  Type: %x\n" % self.type)
+        fd.write("  CHS of last absolute sector (%u, %u, %u)\n" % self.chs_last_sector)
+        fd.write("  LBA of first absolute sector n partition: %u\n" % self.lba_first_sector)
+        fd.write("  Number of sectors in partition: %u\n" % self.sectors_in_partition)
 
 class Partition:
     """Storage for the binary image of a complete partition"""
@@ -73,6 +86,13 @@ class Ext2Filesystem:
 
 #####################################################################################################
 
+class UnknownFileSystem:
+    def __init__(self, message):
+        self.message = message
+
+    def __str__(self):
+        return self.message
+
 class Harddisk:
     def __init__(self, file_name, mode="r"):
         if not mode in ["r", "a"]:
@@ -107,6 +127,6 @@ class Harddisk:
             # TODO 0x83 is official not always just Ext2, need a cleverer detection
             return Ext2Filesystem( self.get_partition(partition_number) )
         else:
-            raise "No filesystem implementation for type %u" % pi.type
+            raise UnknownFileSystem("No filesystem implementation for type %x" % pi.type)
         
         
