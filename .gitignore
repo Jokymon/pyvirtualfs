@@ -1,0 +1,7 @@
+# temporary editor files
+*.swp
+
+# Compiled Python sources
+*.pyc
+*.pyo
+
