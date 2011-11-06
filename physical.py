@@ -77,19 +77,6 @@ class FileHandle:
 
 #####################################################################################################
 
-class Ext2Filesystem:
-    def __init__(self, partition):
-        self.partition = partition
-
-        self.s_inodes_count = char2dword(self.partition[1024:1028])
-        self.s_blocks_count = char2dword(self.partition[1028:1032])
-
-    def dump(self, fd=sys.stdout):
-        fd.write("Number of INodes: %u\n" % self.s_inodes_count)
-        fd.write("Number of Blocks: %u\n" % self.s_blocks_count)
-
-#####################################################################################################
-
 class UnknownFileSystem:
     def __init__(self, message):
         self.message = message
@@ -129,6 +116,7 @@ class Harddisk:
             return FAT16Filesystem( self.get_partition(partition_number) )
         elif pi.type==0x83:
             # TODO 0x83 is official not always just Ext2, need a cleverer detection
+            from ext2 import Ext2Filesystem
             return Ext2Filesystem( self.get_partition(partition_number) )
         else:
             raise UnknownFileSystem("No filesystem implementation for type %x" % pi.type)
