@@ -147,5 +147,67 @@ class Harddisk:
             return Ext2Filesystem( self.get_partition(partition_number) )
         else:
             raise UnknownFileSystem("No filesystem implementation for type %x" % pi.type)
+
+#--------------------------------------------------------------------------------------------
+class VolumeDescriptor:
+    def __init__(self, entry):
+        self.type = ord(entry[0])
+        self.standard_id = entry[1:6]
+        self.version = ord(entry[6])
+    
+    def dump(self, fd=sys.stdout):
+        fd.write("  type = %u\n" % self.type)
+        fd.write("  std_id = %s\n" % self.standard_id)
+        fd.write("  version = %u\n" % self.version)
+
+class PrimaryVolumeDescriptor(VolumeDescriptor):
+    def __init__(self, entry):
+        VolumeDescriptor.__init__(self, entry)
+        self.system_identifier = entry[8:40]
+        self.volume_identifier = entry[40:72]
+        self.space_size = char2dword(entry[80:84])
+        # ...
+        self.logical_block_size = char2word(entry[128:130])
+        # ...
+        self.set_identifier = entry[190:318]
+        self.publisher_identifier = entry[318:446]
+        self.data_preparer_identifier = entry[446:574]
+        self.application_identifier = entry[574:702]
+        self.copyright_file_identifier = entry[702:739]
+
+    def dump(self, fd=sys.stdout):
+        VolumeDescriptor.dump(self, fd)
+        fd.write("  system id = %s\n" % self.system_identifier)
+        fd.write("  volume id = %s\n" % self.volume_identifier)
+        fd.write("  space size = %u\n" % self.space_size)
+        # ...
+        fd.write("  logical block size = %u\n" % self.logical_block_size)
+        # ...
+        fd.write("  set identifier = %s\n" % self.set_identifier)
+        fd.write("  publisher identifier = %s\n" % self.publisher_identifier)
+        fd.write("  data preparer identifier = %s\n" % self.data_preparer_identifier)
+        fd.write("  application identifier = %s\n" % self.application_identifier)
+        fd.write("  copyright file identifier = %s\n" % self.copyright_file_identifier)
+
+def parseVolumeDescriptor(entry):
+    if ord(entry[0])==1:
+        return PrimaryVolumeDescriptor(entry)
+    else:
+        return VolumeDescriptor(entry)
         
+class CdRom:
+    def __init__(self, file_name, mode="r"):
+        if not mode in ["r", "a"]:
+            raise ValueError("mode string must be one of 'r', 'a', not '%s'" % mode)
+        import mmap
+        self._image = open(file_name, mode+"+b")
+        mmap_access = { "r" : mmap.ACCESS_READ, "a" : mmap.ACCESS_WRITE }[mode]
+        self._mmap = mmap.mmap(self._image.fileno(), 0, access=mmap_access)
+        self._parse_volume_descriptors()
+
+    def _parse_volume_descriptors(self):
+        offset = 32768
+        vd = parseVolumeDescriptor(self._mmap[offset:offset+2048])
+        vd.dump()
+
         
