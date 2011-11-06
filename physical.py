@@ -102,6 +102,10 @@ class Harddisk:
         self.disk_signature = char2dword( mbr[440:444] )
         self.mbr_signature  = char2word( mbr[510:512] )
 
+    def dump(self, fd=sys.stdout):
+        fd.write("Disk signature: %X\n" % self.disk_signature)
+        fd.write("MBR signature: %X\n" % self.mbr_signature)
+
     def get_partition_info(self, partition_number):
         return PartitionInfo( self.partition_records[partition_number] )
 

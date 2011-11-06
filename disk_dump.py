@@ -7,9 +7,8 @@ def main():
     import sys
     
     hd = Harddisk(sys.argv[1], "a")
+    hd.dump()
     
-    print "Disk signature: %X" % hd.disk_signature
-    print "MBR signature: %X" % hd.mbr_signature
     for i in range(4):
         print "##############################################"
         print "Partition %u" % i
