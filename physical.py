@@ -11,6 +11,16 @@ class PartitionInfo:
         self.lba_first_sector     = char2dword(entry[8:12])
         self.sectors_in_partition = char2dword(entry[12:16])
 
+    def get_record_entry(self):
+        record = "%c%s%c%s%s%s" % (
+            chr(self.bootable),
+            chs2str(self.chs_first_sector),
+            chr(self.type),
+            chs2str(self.chs_last_sector),
+            dword2str(self.lba_first_sector),
+            dword2str(self.sectors_in_partition))
+        return record
+
     def dump(self, fd=sys.stdout):
         if self.bootable==0x80:
             fd.write("  bootable\n")
@@ -99,15 +109,28 @@ class Harddisk:
         mbr = self._mmap[0:512]
 
         self.partition_records = [ mbr[446 + i*16: 446 + (i+1)*16] for i in range(4) ]
-        self.disk_signature = char2dword( mbr[440:444] )
-        self.mbr_signature  = char2word( mbr[510:512] )
+        self._disk_signature = char2dword( mbr[440:444] )
+        self._mbr_signature  = char2word( mbr[510:512] )
 
     def dump(self, fd=sys.stdout):
-        fd.write("Disk signature: %X\n" % self.disk_signature)
-        fd.write("MBR signature: %X\n" % self.mbr_signature)
+        fd.write("Disk signature: %X\n" % self._disk_signature)
+        fd.write("MBR signature: %X\n" % self._mbr_signature)
+
+    def update_image(self, disk_signature = None):
+        """Update the disk image file with the current partition records and an
+        optionally given disk_signature"""
+        if not disk_signature:
+            disk_signature = self._disk_signature
+        self._mmap[440:444] = dword2str( disk_signature )
+        self._mmap[510:512] = word2str( 0xaa55 )
+        for i in range(4):
+            self._mmap[446+i*16 : 446+(i+1)*16] = self.partition_records[i]
 
     def get_partition_info(self, partition_number):
         return PartitionInfo( self.partition_records[partition_number] )
+
+    def set_partition_info(self, partition_number, partition_info):
+        self.partition_records[partition_number] = partition_info.get_record_entry()
 
     def get_partition(self, partition_number):
         pi = self.get_partition_info(partition_number)
