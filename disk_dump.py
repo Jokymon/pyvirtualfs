@@ -11,19 +11,15 @@ def main():
     print "Disk signature: %X" % hd.disk_signature
     print "MBR signature: %X" % hd.mbr_signature
     for i in range(4):
-        print "----------------------------------------------"
+        print "##############################################"
         print "Partition %u" % i
         hd.get_partition_info(i).dump()
-    
-    ####################################################################################
-
-    fs = hd.get_filesystem(1)
-    fs.dump()
-
-    ####################################################################################
-    # jump to the FAT
-
-    #fat16 = hd.get_filesystem(1)
+        try:
+            fs = hd.get_filesystem(i)
+            print "----------------------------------------------"
+            fs.dump()
+        except UnknownFileSystem:
+            pass
 
     #####################################################################################
     ## jump to the root directory
