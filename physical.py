@@ -160,7 +160,7 @@ class VolumeDescriptor:
         fd.write("  std_id = %s\n" % self.standard_id)
         fd.write("  version = %u\n" % self.version)
 
-class PrimaryVolumeDescriptor(VolumeDescriptor):
+class NAryVolumeDescriptor(VolumeDescriptor):
     def __init__(self, entry):
         VolumeDescriptor.__init__(self, entry)
         self.system_identifier = entry[8:40]
@@ -176,6 +176,10 @@ class PrimaryVolumeDescriptor(VolumeDescriptor):
         self.copyright_file_identifier = entry[702:739]
 
     def dump(self, fd=sys.stdout):
+        if self.type==1:
+            fd.write("Primary Volume Descriptor\n")
+        else:
+            fd.write("Secondary Volume Descriptor\n")
         VolumeDescriptor.dump(self, fd)
         fd.write("  system id = %s\n" % self.system_identifier)
         fd.write("  volume id = %s\n" % self.volume_identifier)
@@ -189,9 +193,19 @@ class PrimaryVolumeDescriptor(VolumeDescriptor):
         fd.write("  application identifier = %s\n" % self.application_identifier)
         fd.write("  copyright file identifier = %s\n" % self.copyright_file_identifier)
 
+class VolumeDescriptorSetTerminator(VolumeDescriptor):
+    def __init__(self, entry):
+        VolumeDescriptor.__init__(self, entry)
+
+    def dump(self, fd=sys.stdout):
+        fd.write("!!! Volume Descriptor Set Terminator !!!\n")
+        VolumeDescriptor.dump(self, fd)
+
 def parseVolumeDescriptor(entry):
-    if ord(entry[0])==1:
-        return PrimaryVolumeDescriptor(entry)
+    if ord(entry[0]) in [1, 2]:
+        return NAryVolumeDescriptor(entry)
+    elif ord(entry[0])==255:
+        return VolumeDescriptorSetTerminator(entry)
     else:
         return VolumeDescriptor(entry)
         
@@ -207,7 +221,13 @@ class CdRom:
 
     def _parse_volume_descriptors(self):
         offset = 32768
+        self._volumedescriptors = []
         vd = parseVolumeDescriptor(self._mmap[offset:offset+2048])
         vd.dump()
+        while not isinstance(vd, VolumeDescriptorSetTerminator):
+            self._volumedescriptors.append( vd )
+            offset += 2048
+            vd = parseVolumeDescriptor(self._mmap[offset:offset+2048])
+            vd.dump()
 
         
