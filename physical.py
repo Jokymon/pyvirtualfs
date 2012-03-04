@@ -36,8 +36,8 @@ class PartitionInfo:
 
 class Partition:
     """Storage for the binary image of a complete partition"""
-    def __init__(self, mapped_file, partition_info):
-        self._mmap = mapped_file
+    def __init__(self, image, partition_info):
+        self._image = image
         self.partition_info = partition_info
         start_byte = 512*partition_info.lba_first_sector
         end_byte   = start_byte + 512*partition_info.sectors_in_partition
@@ -45,45 +45,39 @@ class Partition:
 
     def __getitem__(self, key):
         if type(key)==slice:
-            return self._mmap[ self.start_byte + key.start : self.start_byte + key.stop ]
+            return self._image[ self.start_byte + key.start : self.start_byte + key.stop ]
         else:
-            return self._mmap[ self.start_byte + key ]
+            return self._image[ self.start_byte + key ]
 
-class FileInfo:
-    def __init__(self):
-        self.filename = ""
-        # attributes is a list of all attributes that apply to this directory
-        # which can be "read_only", "hidden", "system", "archive", "directory"
-        self.attributes = []
-        self.creation_time = None
-        self.last_access_time = None
-        self.last_modification_time = None
-        # start byte is the first byte of the file relative to the containing
-        # partitions start
-        self.start_byte = 0
-        # size of the file in bytes
-        self.size = 0
+#####################################################################################################
 
-class FileHandle:
-    def __init__(self):
-        self._currentpos = 0
-        self._open = False
+import sys
+if sys.version_info[0]>=3:
+    def string2byte(s):
+        return bytes( map(ord, s) )
+    def byte2string(b):
+        return b.decode()
+else:
+    def string2byte(s):
+        return s
+    def byte2string(b):
+        return b
 
-    def close(self):
-        pass
+class DiskImage:
+    def __init__(self, file_name, mode="r"):
+        # TODO: handle creation of image on mode=="w"
+        if not mode in ["r", "a"]:
+            raise ValueError("mode string must be one of 'r', 'a', not '%s'" % mode)
+        import mmap
+        self._image = open(file_name, mode+"+b")
+        mmap_access = { "r" : mmap.ACCESS_READ, "a" : mmap.ACCESS_WRITE }[mode]
+        self._mmap = mmap.mmap(self._image.fileno(), 0, access=mmap_access)
 
-    def read(self, size=None):
-        pass
+    def __getitem__(self, index):
+        return byte2string(self._mmap.__getitem__(index))
 
-    def seek(offset, whence=os.SEEK_SET):
-        pass
-
-    def tell(self):
-        return self._currentpos
-
-    def write(self, s):
-        pass
-    
+    def __setitem__(self, index, value):
+        self._mmap.__setitem__(index, string2byte(value))
 
 #####################################################################################################
 
@@ -95,18 +89,12 @@ class UnknownFileSystem:
         return self.message
 
 class Harddisk:
-    def __init__(self, file_name, mode="r"):
-        if not mode in ["r", "a"]:
-            raise ValueError("mode string must be one of 'r', 'a', not '%s'" % mode)
-        import mmap
-        self._image = open(file_name, mode+"+b")
-        mmap_access = { "r" : mmap.ACCESS_READ, "a" : mmap.ACCESS_WRITE }[mode]
-        self._mmap = mmap.mmap(self._image.fileno(), 0, access=mmap_access)
+    def __init__(self, image):
+        self._image = image
         self._parse_partition_table()
 
     def _parse_partition_table(self):
-        self._image.seek(0)
-        mbr = self._mmap[0:512]
+        mbr = self._image[0:512]
 
         self.partition_records = [ mbr[446 + i*16: 446 + (i+1)*16] for i in range(4) ]
         self._disk_signature = char2dword( mbr[440:444] )
@@ -121,10 +109,10 @@ class Harddisk:
         optionally given disk_signature"""
         if not disk_signature:
             disk_signature = self._disk_signature
-        self._mmap[440:444] = dword2str( disk_signature )
-        self._mmap[510:512] = word2str( 0xaa55 )
+        self._image[440:444] = dword2str( disk_signature )
+        self._image[510:512] = word2str( 0xaa55 )
         for i in range(4):
-            self._mmap[446+i*16 : 446+(i+1)*16] = self.partition_records[i]
+            self._image[446+i*16 : 446+(i+1)*16] = self.partition_records[i]
 
     def get_partition_info(self, partition_number):
         return PartitionInfo( self.partition_records[partition_number] )
@@ -134,7 +122,7 @@ class Harddisk:
 
     def get_partition(self, partition_number):
         pi = self.get_partition_info(partition_number)
-        return Partition(self._mmap, pi)
+        return Partition(self._image, pi)
 
     def get_filesystem(self, partition_number):
         pi = self.get_partition_info(partition_number)
@@ -210,24 +198,19 @@ def parseVolumeDescriptor(entry):
         return VolumeDescriptor(entry)
         
 class CdRom:
-    def __init__(self, file_name, mode="r"):
-        if not mode in ["r", "a"]:
-            raise ValueError("mode string must be one of 'r', 'a', not '%s'" % mode)
-        import mmap
-        self._image = open(file_name, mode+"+b")
-        mmap_access = { "r" : mmap.ACCESS_READ, "a" : mmap.ACCESS_WRITE }[mode]
-        self._mmap = mmap.mmap(self._image.fileno(), 0, access=mmap_access)
+    def __init__(self, image):
+        self._image = image
         self._parse_volume_descriptors()
 
     def _parse_volume_descriptors(self):
         offset = 32768
         self._volumedescriptors = []
-        vd = parseVolumeDescriptor(self._mmap[offset:offset+2048])
+        vd = parseVolumeDescriptor(self._image[offset:offset+2048])
         vd.dump()
         while not isinstance(vd, VolumeDescriptorSetTerminator):
             self._volumedescriptors.append( vd )
             offset += 2048
-            vd = parseVolumeDescriptor(self._mmap[offset:offset+2048])
+            vd = parseVolumeDescriptor(self._image[offset:offset+2048])
             vd.dump()
 
         

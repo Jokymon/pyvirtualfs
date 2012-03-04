@@ -1,12 +1,12 @@
 from optparse import OptionParser
-from physical import Harddisk
+from physical import DiskImage, Harddisk
 
 def create_empty_image(fname, size_in_bytes):
     # TODO check if the file exists
     import os
     f = open(fname, 'wb')
     f.seek(size_in_bytes-1, os.SEEK_SET)
-    f.write('\0')
+    f.write("\0".encode("utf-8"))
     f.close()
 
 def main():
@@ -18,7 +18,8 @@ def main():
 
     create_empty_image( "test.bin", int(options.image_size) )
 
-    hd = Harddisk( "test.bin", "a" )
+    image = DiskImage( "test.bin", "a" )
+    hd = Harddisk( image )
     
     p = hd.get_partition_info(0)
     p.type = 0x83

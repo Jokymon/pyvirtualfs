@@ -6,8 +6,10 @@ spt = 63 # for the c50m.img
 def main():
     import sys
     
-    hd = Harddisk(sys.argv[1], "a")
-    hd.dump()
+    cd = CdRom(sys.argv[1], "r")
+    return
+    #hd = Harddisk(sys.argv[1], "a")
+    #hd.dump()
     
     for i in range(4):
         print "##############################################"
