@@ -5,8 +5,9 @@ spt = 63 # for the c50m.img
 
 def main():
     import sys
-    
-    cd = CdRom(sys.argv[1], "r")
+   
+    diskimage = DiskImage(sys.argv[1], "r")
+    cd = CdRom(diskimage)
     return
     #hd = Harddisk(sys.argv[1], "a")
     #hd.dump()
