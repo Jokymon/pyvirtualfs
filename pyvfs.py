@@ -15,8 +15,31 @@ class CommandInterpreter:
             self.do_help([])
 
     def do_create(self, parameters):
-        """Create a new disk image with the given parameters."""
-        pass
+        """Create a new empty disk image of the given size. Give a file name
+        for the new image and the size which can be given with a suffix:
+            <size>[k|M|G]"""
+        def parse_size(s):
+            value = s.strip()
+            suffix = ""
+            if value[-1] in ["k", "M", "G"]:
+                suffix = value[-1]
+                value = value[:-1]
+            try:
+                value = int(value)
+            except:
+                raise ValueError("%s is not a valid size string" % s)
+            return value * {"": 1, "k": 1024, 
+                            "M": 1024*1024, 
+                            "G": 1024*1024*1024}[suffix]
+        
+        if len(parameters)<2:
+            print("'create' command requires a filename and a size")
+            return
+        filename = parameters[0]
+        size = parse_size( parameters[1] )
+        from commands import CreateCommand
+        cmd = CreateCommand(filename, size)
+        cmd.execute()
 
     def do_help(self, parameters):
         """Print an overview of all available commands."""
