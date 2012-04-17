@@ -1,4 +1,24 @@
-import textwrap
+import textwrap, inspect
+
+def command(wrappee):
+    wrappee.__is_command__ = True
+    doclines = wrappee.__doc__.format(cmd=wrappee.__name__)
+    doclines = doclines.split("\n")
+    doclines = list(filter(lambda x: x.strip()!="", doclines))
+    wrappee.__shortdoc__ = doclines[0].strip()
+    wrappee.__usagedoc__ = ""
+    if len(doclines)>1:
+        wrappee.__usagedoc__ = doclines[1].strip()
+    wrappee.__longdoc__ = ""
+    if len(doclines)>2:
+        wrappee.__longdoc__ = " ".join(doclines[2:])
+
+    return wrappee
+
+def iscommand(function):
+    if inspect.ismethod(function) and hasattr(function, "__is_command__"):
+        return True
+    return False
 
 class CommandInterpreter:
     def __init__(self):
@@ -8,16 +28,22 @@ class CommandInterpreter:
         command = "help"
         if len(parameters):
             command = parameters.pop(0)
-        if hasattr(self, "do_%s" % command):
-            getattr(self, "do_%s" % command)( parameters )
+        if hasattr(self, command) and iscommand(getattr(self, command)):
+            getattr(self, command)( parameters )
         else:
             print("Unknown command '%s'" % command)
-            self.do_help([])
+            self.help([])
 
-    def do_create(self, parameters):
-        """Create a new empty disk image of the given size. Give a file name
-        for the new image and the size which can be given with a suffix:
-            <size>[k|M|G]"""
+    @command
+    def create(self, parameters):
+        """Creating empty disk images with a given size.
+        
+        {cmd} <image_file_name> <size>[k|M|G]
+
+        Create a new empty disk image with the file name <image_file_name>. The
+        size of the image can be specified in bytes (without a suffix), in
+        kilobytes (suffix 'k'), Megabytes (suffix 'M') or Gigabytes (suffix
+        'G')."""
         def parse_size(s):
             value = s.strip()
             suffix = ""
@@ -41,32 +67,25 @@ class CommandInterpreter:
         cmd = CreateCommand(filename, size)
         cmd.execute()
 
-    def do_help(self, parameters):
+    @command
+    def help(self, parameters):
         """Print an overview of all available commands."""
         COMMAND_LEADIN = "  "
         COMMAND_LEADOUT = "  "
         CONSOLE_WIDTH = 79
 
-        def get_command_and_help(function):
-            command = function.__func__.__name__[3:]    # strip off the 'do_' part
-            doclines = function.__doc__.split("\n")
-            doclines = map(lambda x: x.strip(), doclines)
-            return (command, " ".join(doclines))
-
-        command_names = list(filter(lambda x : x.startswith("do_"), dir(self)))
-        commands = map( lambda x: getattr(self, x), command_names )
-        commands = list(map( get_command_and_help, commands ))
-        command_lengths = map(lambda x: len(x[0]), commands)
+        commands = [ item[1] for item in inspect.getmembers(self, iscommand) ]
+        command_lengths = map(lambda x: len(x.__name__), commands)
         max_length = max( command_lengths )
         indent = len( COMMAND_LEADIN+COMMAND_LEADOUT ) + max_length
 
         print("PyvirtualFS utility")
         print("")
-        for (command, help) in commands:
-            help_lines = textwrap.wrap(help,
+        for cmd in commands:
+            help_lines = textwrap.wrap(cmd.__shortdoc__,
                                        width = CONSOLE_WIDTH-indent,
                                        subsequent_indent=indent*" ")
-            print(COMMAND_LEADIN + ("%-"+ "%us" % max_length) % command
+            print(COMMAND_LEADIN + ("%-"+ "%us" % max_length) % cmd.__name__
                   + COMMAND_LEADOUT + help_lines[0] )
             for line in help_lines[1:]:
                 print(line)
