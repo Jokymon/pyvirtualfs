@@ -5,36 +5,55 @@ class PathParseError(Exception):
 class ImagePath:
     """An ImagePath object represents the path to a file inside an image
     file."""
-    def __init__(self, imagefile, partition=0, filepath="/"):
+
+    IMAGE_TYPE_HD = 1
+    IAMGE_TYPE=FD = 2
+    IMAGE_TYPE_CDROM = 3
+
+    def __init__(self, imagefile, imagetype=IMAGE_TYPE_HD, partition=0, filepath="/"):
         self.imagefile = imagefile
+        self.imagetpye = imagetype
         self.partition = partition
         self.filepath = filepath
 
     def __repr__(self):
-        return "Imagefile: %s, parition: %u, filepath: %s" % 
-                (self.imagefile, self.partition, self.filepath)
+        return "Imagefile: %s, type: %u, parition: %u, filepath: %s" % 
+                (self.imagefile, self.imagetype, self.partition, self.filepath)
 
     @staticmethod
     def parse(s):
-        tokens = s.split("::")
-        if len(tokens)<1 or len(tokens)>2:
-            raise PathParseError("Invalid path")
+        import urllib.parse.urlparse as urlparse
 
-        image_path = ImagePath( tokens.pop(0) )
-        if len(tokens)!=0:
-            token = tokens[0]
-            # TODO: Handle empty part after ::
-            if token[0]=='<':
-                end_of_partition = token.find(">")
-                if end_of_partition==-1:
-                    raise PathParseError("Missing the closing '>' for the partition declaration")
-                partition = token[1:end_of_partition]
-                try:
-                    partition = int(partition)
-                except ValueError:
-                    raise PathParseError("Partition declaration must be an  integer")
-                image_path.partition = partition
-                token = token[end_of_partition+1:]
-            image_path.filepath = token
-        return image_path
+        #if pythonversion==2:
+        #    urlparse.uses_netloc.append("image")
+
+        parsed = urlparse(s)
+        if parsed.scheme!="image":
+            raise PathParseError("Only URL scheme image:// is supported")
+
+        if not ":" in parsed.netloc:
+            raise PathParseError("Image type hd, fd or cdrom needed after the image file name and a ':'")
+
+        (imagefile, imagetype) = parsed.netloc.split(":")
+        path_elements = parsed.path.split("/")
+        if len(path_elements)<=1:
+            partition = None
+            filepath = "/"
+        elif path_elements[2].startswith("partition"):
+            partition = int(path_elements[2][9:])
+            filepath = "/".join([""] + path_elements[3:])
+        else:
+            partition = None
+            filepath = parsed.path
+
+        if imagetype=="hd":
+            imagetype = ImagePath.IMAGE_TYPE_HD
+        elif imagetype=="fd":
+            imagetype = ImagePath.IMAGE_TYPE_FD
+        elif iamgetype=="cdrom":
+            imagetype = ImagePath.IMAGE_TYPE_CDROM
+        else:
+            raise PathParseError("Image type %s unknown/unspported" % imagetype)
+
+        return ImagePath( imagefile, imagetype, partition, filepath )
 
