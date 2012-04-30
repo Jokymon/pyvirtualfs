@@ -1,7 +1,8 @@
-import textwrap, inspect
+import textwrap, inspect, collections
 
 def command(wrappee):
     wrappee.__is_command__ = True
+    wrappee.__doc__ = wrappee.__doc__.format(cmd=wrappee.__name__)
     doclines = wrappee.__doc__.format(cmd=wrappee.__name__)
     doclines = doclines.split("\n")
     doclines = list(filter(lambda x: x.strip()!="", doclines))
@@ -16,12 +17,15 @@ def command(wrappee):
 
     return wrappee
 
-def iscommand(function):
-    if inspect.ismethod(function) and hasattr(function, "__is_command__"):
+def iscommand(obj):
+    if isinstance(obj, collections.Callable) and hasattr(obj, "__is_command__"):
         return True
     return False
 
 class CommandInterpreter:
+    def __init__(self):
+        command(self)
+
     def interprete(self, parameters):
         command = "help"
         if len(parameters):
@@ -31,6 +35,9 @@ class CommandInterpreter:
         else:
             print("Unknown command '%s'" % command)
             self.help([])
+
+    def __call__(self, *args, **kwargs):
+        self.interprete(*args, **kwargs)
 
     @command
     def help(self, parameters):

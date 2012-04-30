@@ -4,6 +4,10 @@ from command_tools import command, CommandInterpreter
 class PyvfsCommandInterpreter(CommandInterpreter):
     """PyVirtualFS"""
 
+    def __init__(self):
+        self.__name__ = "pyvfs"
+        CommandInterpreter.__init__(self)
+
     @command
     def create(self, parameters):
         """Creating empty disk images with a given size.
@@ -38,18 +42,12 @@ class PyvfsCommandInterpreter(CommandInterpreter):
         cmd.execute()
 
     @command
-    def fdisk(self, parameters):
-        """Partition a disk image
-
-        {cmd} <image_file_name> <command> [options]
-        """
-        from image_path import ImagePath
-        img_path = ImagePath.parse(parameters[0])
-
-    @command
     def mkfs(self, parameters):
         """Create file systems in existing partitions"""
         pass
+
+    from commands import FdiskCommand
+    fdisk = FdiskCommand()
 
 if __name__=="__main__":
     import sys
