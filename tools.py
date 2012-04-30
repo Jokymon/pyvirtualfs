@@ -15,6 +15,12 @@ def chs2lba(c, h, s, hpc, spt):
     s the sector. hpc is the heads per cylinder, spt is sectors per track"""
     return ((c * hpc) + h) * spt + s-1
 
+def lba2chs(lba, hpc, spt):
+    s = (lba % spt) + 1
+    h = (lba / spt) % hpc
+    c = lba / (spt*hpc)
+    return (c, h, s)
+
 def word2str(i):
     return chr(i & 0xff) + chr( (i>>8) & 0xff )
 
