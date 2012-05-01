@@ -7,22 +7,22 @@ class ImagePath:
     file."""
 
     IMAGE_TYPE_HD = 1
-    IAMGE_TYPE=FD = 2
+    IAMGE_TYPE_FD = 2
     IMAGE_TYPE_CDROM = 3
 
-    def __init__(self, imagefile, imagetype=IMAGE_TYPE_HD, partition=0, filepath="/"):
+    def __init__(self, imagefile, imagetype=IMAGE_TYPE_HD, partition=None, filepath="/"):
         self.imagefile = imagefile
-        self.imagetpye = imagetype
+        self.imagetype = imagetype
         self.partition = partition
         self.filepath = filepath
 
     def __repr__(self):
-        return "Imagefile: %s, type: %u, parition: %u, filepath: %s" % 
+        return "Imagefile: %s, type: %u, parition: %s, filepath: %s" % \
                 (self.imagefile, self.imagetype, self.partition, self.filepath)
 
     @staticmethod
     def parse(s):
-        import urllib.parse.urlparse as urlparse
+        from urllib.parse import urlparse as urlparse
 
         #if pythonversion==2:
         #    urlparse.uses_netloc.append("image")
@@ -39,8 +39,8 @@ class ImagePath:
         if len(path_elements)<=1:
             partition = None
             filepath = "/"
-        elif path_elements[2].startswith("partition"):
-            partition = int(path_elements[2][9:])
+        elif path_elements[1].startswith("partition"):
+            partition = int(path_elements[1][9:])
             filepath = "/".join([""] + path_elements[3:])
         else:
             partition = None
