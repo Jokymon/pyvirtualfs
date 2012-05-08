@@ -56,7 +56,7 @@ if sys.version_info[0]>=3:
     def string2byte(s):
         return bytes( map(ord, s) )
     def byte2string(b):
-        return b.decode()
+        return b.decode(errors='replace')
 else:
     def string2byte(s):
         return s

@@ -17,8 +17,8 @@ def chs2lba(c, h, s, hpc, spt):
 
 def lba2chs(lba, hpc, spt):
     s = (lba % spt) + 1
-    h = (lba / spt) % hpc
-    c = lba / (spt*hpc)
+    h = int(lba / spt) % hpc
+    c = int(lba / (spt*hpc))
     return (c, h, s)
 
 def word2str(i):
@@ -31,4 +31,8 @@ def chs2str(chs):
     (cylinder, head, sector) = chs
     return chr(head) + chr( sector | ((cylinder>>8) & 0x3) ) + chr( cylinder&0xff )
 
-
+def int_ex(s):
+    if s.startswith("0x"):
+        return int(s[2:], 16)
+    else:
+        return int(s)
