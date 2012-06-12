@@ -7,7 +7,7 @@ class ImagePath:
     file."""
 
     IMAGE_TYPE_HD = 1
-    IAMGE_TYPE_FD = 2
+    IMAGE_TYPE_FD = 2
     IMAGE_TYPE_CDROM = 3
 
     def __init__(self, imagefile, imagetype=IMAGE_TYPE_HD, partition=None, filepath="/"):
@@ -22,7 +22,11 @@ class ImagePath:
 
     @staticmethod
     def parse(s):
-        from urllib.parse import urlparse as urlparse
+        import sys
+        if sys.version_info[0]<=2:
+            from urlparse import urlparse
+        else:
+            from urllib.parse import urlparse as urlparse
 
         #if pythonversion==2:
         #    urlparse.uses_netloc.append("image")
@@ -41,7 +45,7 @@ class ImagePath:
             filepath = "/"
         elif path_elements[1].startswith("partition"):
             partition = int(path_elements[1][9:])
-            filepath = "/".join([""] + path_elements[3:])
+            filepath = "/".join([""] + path_elements[2:])
         else:
             partition = None
             filepath = parsed.path
@@ -50,7 +54,7 @@ class ImagePath:
             imagetype = ImagePath.IMAGE_TYPE_HD
         elif imagetype=="fd":
             imagetype = ImagePath.IMAGE_TYPE_FD
-        elif iamgetype=="cdrom":
+        elif imagetype=="cdrom":
             imagetype = ImagePath.IMAGE_TYPE_CDROM
         else:
             raise PathParseError("Image type %s unknown/unspported" % imagetype)
