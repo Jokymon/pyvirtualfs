@@ -22,7 +22,7 @@ def iscommand(obj):
         return True
     return False
 
-class CommandInterpreter:
+class CommandInterpreter(object):
     def __init__(self):
         command(self)
 
