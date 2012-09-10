@@ -15,7 +15,7 @@ class CreateCommand:
 class FdiskCommand(CommandInterpreter):
     """Managing partitions on a disk image
 
-    {cmd} <image_file_name> <command> [options]"""
+    {cmd} <command> <image_file_name> [options]"""
     def __init__(self):
         self.__name__ = "fdisk"
         CommandInterpreter.__init__(self)
