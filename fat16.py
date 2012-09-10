@@ -25,11 +25,11 @@ class FAT16FileInfo(physical.FileInfo):
         if attributes & 0x20:
             self.attributes.append("archive")
         # determine the start byte of this file entry
-        self.start_cluster = char2word(fat16_entry[26:28]) 
+        self.start_cluster = list2word(fat16_entry[26:28]) 
         self.start_byte = (self.start_cluster-2) * fat16.sectors_per_cluster * 512
         self.start_byte += fat16.start_of_data
 
-        self.size = char2dword(fat16_entry[28:32])
+        self.size = list2dword(fat16_entry[28:32])
 
 class FAT16FileHandle(physical.FileHandle):
     def __init__(self, fat16, fileinfo):
@@ -83,12 +83,12 @@ class FAT16Filesystem:
         self.partition = partition
 
         self.oem_name             = self.partition[3:11]
-        self.bytes_per_sector     = char2word(self.partition[11:13])
+        self.bytes_per_sector     = list2word(self.partition[11:13])
         self.sectors_per_cluster  = ord(self.partition[13])
-        self.reserved_sectors     = char2word(self.partition[14:16])
+        self.reserved_sectors     = list2word(self.partition[14:16])
         self.number_of_fats       = ord(self.partition[16])
-        self.max_root_dir_entries = char2word(self.partition[17:19])
-        self.sectors_per_fat      = char2word(self.partition[22:24])
+        self.max_root_dir_entries = list2word(self.partition[17:19])
+        self.sectors_per_fat      = list2word(self.partition[22:24])
 
         # calculate the byte address of cluster 2
         self.start_of_data = 512 * (self.number_of_fats*self.sectors_per_fat + 1 ) # root directory start
@@ -119,7 +119,7 @@ class FAT16Filesystem:
 
     def get_fat_entry(self, fat_no = 0, fat_entry = 0):
         fat_start = 512*self.reserved_sectors + fat_no*(512*self.sectors_per_fat)
-        return char2word( self.partition[ fat_start + 2*fat_entry : fat_start + 2*fat_entry + 2] )
+        return list2word( self.partition[ fat_start + 2*fat_entry : fat_start + 2*fat_entry + 2] )
 
     def listdir(self, directory):
         pass

@@ -4,21 +4,20 @@ from tools import *
 class PartitionInfo:
     """Class to collect the information of a partition entry"""
     def __init__(self, entry):
-        self.bootable             = ord(entry[0])
-        self.type                 = ord(entry[4])
-        self.chs_first_sector     = char2chs(entry[1:4])
-        self.chs_last_sector      = char2chs(entry[5:8])
-        self.lba_first_sector     = char2dword(entry[8:12])
-        self.sectors_in_partition = char2dword(entry[12:16])
+        self.bootable             = entry[0]
+        self.type                 = entry[4]
+        self.chs_first_sector     = list2chs(entry[1:4])
+        self.chs_last_sector      = list2chs(entry[5:8])
+        self.lba_first_sector     = list2dword(entry[8:12])
+        self.sectors_in_partition = list2dword(entry[12:16])
 
     def get_record_entry(self):
-        record = "%c%s%c%s%s%s" % (
-            chr(self.bootable),
-            chs2str(self.chs_first_sector),
-            chr(self.type),
-            chs2str(self.chs_last_sector),
-            dword2str(self.lba_first_sector),
-            dword2str(self.sectors_in_partition))
+        record = [ self.bootable ] + \
+            chs2list(self.chs_first_sector) + \
+            [ self.type ] + \
+            chs2list(self.chs_last_sector) + \
+            dword2list(self.lba_first_sector) + \
+            dword2list(self.sectors_in_partition)
         return record
 
     def dump(self, fd=sys.stdout):
@@ -53,15 +52,15 @@ class Partition:
 
 import sys
 if sys.version_info[0]>=3:
-    def string2byte(s):
-        return bytes( map(ord, s) )
-    def byte2string(b):
-        return b.decode(errors='replace')
+    def mmap2intlist(m):
+        return list(map(lambda x: x, m))
+    def intlist2mmap(l):
+        return bytes(l)
 else:
-    def string2byte(s):
-        return s
-    def byte2string(b):
-        return b
+    def mmap2intlist(m):
+        return map(ord, m)
+    def intlist2mmap(l):
+        return "".join(map(chr, l))
 
 class DiskImage:
     def __init__(self, file_name, mode="r"):
@@ -74,10 +73,11 @@ class DiskImage:
         self._mmap = mmap.mmap(self._image.fileno(), 0, access=mmap_access)
 
     def __getitem__(self, index):
-        return byte2string(self._mmap.__getitem__(index))
+        data = self._mmap.__getitem__(index)
+        return mmap2intlist(self._mmap.__getitem__(index))
 
     def __setitem__(self, index, value):
-        self._mmap.__setitem__(index, string2byte(value))
+        self._mmap.__setitem__(index, intlist2mmap(value))
 
 #####################################################################################################
 
@@ -97,8 +97,8 @@ class Harddisk:
         mbr = self._image[0:512]
 
         self.partition_records = [ mbr[446 + i*16: 446 + (i+1)*16] for i in range(4) ]
-        self._disk_signature = char2dword( mbr[440:444] )
-        self._mbr_signature  = char2word( mbr[510:512] )
+        self._disk_signature = list2dword( mbr[440:444] )
+        self._mbr_signature  = list2word( mbr[510:512] )
 
     def dump(self, fd=sys.stdout):
         fd.write("Disk signature: %X\n" % self._disk_signature)
@@ -109,8 +109,8 @@ class Harddisk:
         optionally given disk_signature"""
         if not disk_signature:
             disk_signature = self._disk_signature
-        self._image[440:444] = dword2str( disk_signature )
-        self._image[510:512] = word2str( 0xaa55 )
+        self._image[440:444] = dword2list( disk_signature )
+        self._image[510:512] = word2list( 0xaa55 )
         for i in range(4):
             self._image[446+i*16 : 446+(i+1)*16] = self.partition_records[i]
 
@@ -153,9 +153,9 @@ class NAryVolumeDescriptor(VolumeDescriptor):
         VolumeDescriptor.__init__(self, entry)
         self.system_identifier = entry[8:40]
         self.volume_identifier = entry[40:72]
-        self.space_size = char2dword(entry[80:84])
+        self.space_size = list2dword(entry[80:84])
         # ...
-        self.logical_block_size = char2word(entry[128:130])
+        self.logical_block_size = list2word(entry[128:130])
         # ...
         self.set_identifier = entry[190:318]
         self.publisher_identifier = entry[318:446]
