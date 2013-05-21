@@ -25,7 +25,7 @@ def word2list(i):
     return [i & 0xff, (i>>8) & 0xff]
 
 def dword2list(i):
-    return [i & 0xff, (i>>8) & 0xff, (i>16) & 0xff, (i>>24) & 0xff]
+    return [i & 0xff, (i>>8) & 0xff, (i>>16) & 0xff, (i>>24) & 0xff]
 
 def chs2list(chs):
     (cylinder, head, sector) = chs
