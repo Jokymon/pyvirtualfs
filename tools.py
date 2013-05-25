@@ -1,8 +1,8 @@
 def list2word(l):
-    return l[0] + l[1]<<8
+    return l[0] + (l[1]<<8)
 
 def list2dword(l):
-    return l[0] + l[1]<<8 + l[2]<<16 + l[3]<<24
+    return l[0] + (l[1]<<8) + (l[2]<<16) + (l[3]<<24)
 
 def list2chs(s):
     head = s[0]
