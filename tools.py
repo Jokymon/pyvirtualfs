@@ -36,3 +36,9 @@ def int_ex(s):
         return int(s[2:], 16)
     else:
         return int(s)
+
+def list2string(l):
+    return "".join(map(chr, l))
+
+def string2list(s):
+    return list(map(ord, s))
