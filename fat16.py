@@ -1,19 +1,21 @@
-import physical
+import filesystem
 import os, sys
 from tools import *
 
 #####################################################################################################
 # Implementation of the FAT16 specific classes
 
-class FAT16FileInfo(physical.FileInfo):
+class FAT16FileInfo(filesystem.FileInfo):
     def __init__(self):
-        physical.FileInfo.__init__(self)
+        filesystem.FileInfo.__init__(self)
 
     def parse_entry(self, fat16, fat16_entry):
         # We need a reference to the FAT16 to calculate the location of the
         # file inside the partition
-        self.filename = "%s.%s" % ( fat16_entry[0:8].strip(), fat16_entry[8:11] )
-        attributes = ord(fat16_entry[11])
+        basename = list2string(fat16_entry[0:8])
+        suffix = list2string(fat16_entry[8:11])
+        self.filename = "%s.%s" % ( basename, suffix )
+        attributes = fat16_entry[11]
         if attributes & 0x1:
             self.attributes.append("read_only")
         if attributes & 0x2:
@@ -31,9 +33,9 @@ class FAT16FileInfo(physical.FileInfo):
 
         self.size = list2dword(fat16_entry[28:32])
 
-class FAT16FileHandle(physical.FileHandle):
+class FAT16FileHandle(filesystem.FileHandle):
     def __init__(self, fat16, fileinfo):
-        physical.FileHandle.__init__(self)
+        filesystem.FileHandle.__init__(self)
         self._fat16 = fat16
         self._fileinfo = fileinfo
         # collect the clusters for this file
@@ -84,9 +86,9 @@ class FAT16Filesystem:
 
         self.oem_name             = self.partition[3:11]
         self.bytes_per_sector     = list2word(self.partition[11:13])
-        self.sectors_per_cluster  = ord(self.partition[13])
+        self.sectors_per_cluster  = self.partition[13]
         self.reserved_sectors     = list2word(self.partition[14:16])
-        self.number_of_fats       = ord(self.partition[16])
+        self.number_of_fats       = self.partition[16]
         self.max_root_dir_entries = list2word(self.partition[17:19])
         self.sectors_per_fat      = list2word(self.partition[22:24])
 
@@ -99,7 +101,7 @@ class FAT16Filesystem:
         i = 0
         fi = FAT16FileInfo()
         fi.parse_entry(self, self.partition[root_directory_start + i*32 : root_directory_start + (i+1)*32])
-        while ord(fi.filename[0]) != 0:
+        while fi.filename[0] != '\0':
             self.root_entries[fi.filename] = fi
             i += 1
             fi = FAT16FileInfo()
