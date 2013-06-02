@@ -46,6 +46,38 @@ class PyvfsCommandInterpreter(CommandInterpreter):
         """Create file systems in existing partitions"""
         pass
 
+
+    @command
+    def dump(self, parameters):
+        """Dump the details of a disk image.
+
+        {cmd} <image_file_name> l<detail level>
+
+        The amount of details can be controlled with the l<number> parameter.
+        1  Show details about the image
+        2  Show a first level of details for all contained file systems."""
+
+        from image_path import ImagePath
+        img_path = ImagePath.parse(parameters[0])
+
+        level = int(parameters[1][1:])
+
+        from physical import DiskImage, Harddisk
+
+        image = DiskImage( img_path.imagefile, "a" )
+        hd = Harddisk( image )
+        hd.dump()
+
+        for i in range(4):      # TODO: take the amount of partitions from the actual image
+            pi = hd.get_partition_info(i)
+            print(" ***** Partition %u *****" % i)
+            pi.dump()
+
+        if level>=2:
+            for i in range(4):
+                fs = hd.get_filesystem(i)
+                fs.dump()
+
     from commands import FdiskCommand
     fdisk = FdiskCommand()
 
