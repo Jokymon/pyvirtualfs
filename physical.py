@@ -74,14 +74,20 @@ class DiskImage:
 
     def __getitem__(self, index):
         data = self._mmap.__getitem__(index)
-        return mmap2intlist(self._mmap.__getitem__(index))
+        if type(data)==slice:
+            return mmap2intlist(data)
+        else:
+            return data
 
     def __setitem__(self, index, value):
-        self._mmap.__setitem__(index, intlist2mmap(value))
+        if type(value)==list:
+            self._mmap.__setitem__(index, intlist2mmap(value))
+        else:
+            self._mmap.__setitem__(index, value)
 
 #####################################################################################################
 
-class UnknownFileSystem:
+class UnknownFileSystem(BaseException):
     def __init__(self, message):
         self.message = message
 
