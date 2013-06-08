@@ -48,6 +48,12 @@ class Partition:
         else:
             return self._image[ self.start_byte + key ]
 
+    def __setitem__(self, key, value):
+        if type(key)==slice:
+            self._image[ self.start_byte + key.start : self.start_byte + key.stop ] = value
+        else:
+            self._image[ self.start_byte + key ] = value
+
 #####################################################################################################
 
 import sys
