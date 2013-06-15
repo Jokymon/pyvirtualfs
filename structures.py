@@ -34,9 +34,21 @@ class UInt8Field(Field):
     def __init__(self, start):
         Field.__init__(self, start, 1)
 
+class Int16Field(Field):
+    def __init__(self, start):
+        Field.__init__(self, start, 2)
+
 class UInt16Field(Field):
     def __init__(self, start):
         Field.__init__(self, start, 2)
+
+class Int32Field(Field):
+    def __init__(self, start):
+        Field.__init__(self, start, 4)
+
+class UInt32Field(Field):
+    def __init__(self, start):
+        Field.__init__(self, start, 4)
 
 class StringField(Field):
     def __init__(self, start, length):
@@ -51,6 +63,17 @@ class StringField(Field):
         assert len(value)<=self.size
         start = instance.start_offset + self.start
         instance.array[start : start+len(value)] = list(map(ord, value))
+
+class NestedStructField(object):
+    def __init__(self, start, nested_structure_type):
+        self.start = start
+        self.nested_structure_type = nested_structure_type
+
+    def __get__(self, instance, owner):
+        return self.nested_structure_type(instance.array, self.start)
+
+    def __set__(self, instance, value):
+        raise ValueError("Cannot set a nested structure")
 
 class ClassWithLengthMetaType(type):
     def __len__(self):
