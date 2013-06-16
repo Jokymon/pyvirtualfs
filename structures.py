@@ -64,6 +64,40 @@ class StringField(Field):
         start = instance.start_offset + self.start
         instance.array[start : start+len(value)] = list(map(ord, value))
 
+class Subrange(object):
+    """A sub range behaves like a list. It returns and modifies the values of
+    an other list by selecting a subrange of it."""
+    def __init__(self, array, start_offset, length):
+        self.array = array
+        self.start_offset = start_offset
+        self.length = length
+
+    def __len__(self):
+        return self.length
+
+    def __getitem__(self, key):
+        if type(key)==slice:
+            return self.array[ self.start_offset + key.start : self.start_offset + key.stop ]
+        else:
+            return self.array[ self.start_offset + key ]
+
+    def __setitem__(self, key, value):
+        if type(key)==slice:
+            self.array[ self.start_offset + key.start : self.start_offset + key.stop ] = value
+        else:
+            self.array[ self.start_offset + key ] = value
+
+class RawField(object):
+    def __init__(self, start, size):
+        self.start = start
+        self.size = size
+
+    def __get__(self, instance, owner):
+        return Subrange(instance.array, instance.start_offset + self.start, self.size)
+
+    def __set__(self, instance, value):
+        raise ValueError("Cannot set a raw type field directly")
+
 class NestedStructField(object):
     def __init__(self, start, nested_structure_type):
         self.start = start
@@ -97,25 +131,3 @@ class StructTemplate(ClassWithLength):
     def __len__(self):
         return len(self.__class__)
 
-class Subrange(object):
-    """A sub range behaves like a list. It returns and modifies the values of
-    an other list by selecting a subrange of it."""
-    def __init__(self, array, start_offset, length):
-        self.array = array
-        self.start_offset = start_offset
-        self.length = length
-
-    def __len__(self):
-        return self.length
-
-    def __getitem__(self, key):
-        if type(key)==slice:
-            return self.array[ self.start_offset + key.start : self.start_offset + key.stop ]
-        else:
-            return self.array[ self.start_offset + key ]
-
-    def __setitem__(self, key, value):
-        if type(key)==slice:
-            self.array[ self.start_offset + key.start : self.start_offset + key.stop ] = value
-        else:
-            self.array[ self.start_offset + key ] = value

@@ -87,7 +87,7 @@ class TestIntFields:
         assert struct.s2.value1 == 2
         assert struct.s2.value2 == 3
 
-    def testGettingNestedStructs(self):
+    def testSettingNestedStructs(self):
         class NestedStructure(structures.StructTemplate):
             value1 = structures.UInt8Field(0)
             value2 = structures.UInt8Field(1)
@@ -107,3 +107,31 @@ class TestIntFields:
         assert array[1] == 50
         assert array[2] == 60
         assert array[3] == 70
+
+class TestRawField:
+    def testGettingRawField(self):
+        class StructureUnderTest(structures.StructTemplate):
+            raw1 = structures.RawField(0, 5)
+            raw2 = structures.RawField(7, 5)
+
+        array = list(range(20))
+        struct = StructureUnderTest(array, 3)
+
+        assert struct.raw1[0] == 3
+        assert struct.raw2[2:5] == [12, 13, 14]
+
+    def testSettingRawField(self):
+        class StructureUnderTest(structures.StructTemplate):
+            raw1 = structures.RawField(0, 5)
+            raw2 = structures.RawField(5, 5)
+
+        array = list(range(20))
+        struct = StructureUnderTest(array, 3)
+        struct.raw1[0:2] = [42, 43]
+
+        assert array[0] == 0
+        assert array[1] == 1
+        assert array[2] == 2
+        assert array[3] == 42
+        assert array[4] == 43
+        assert array[5] == 5
