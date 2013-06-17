@@ -87,7 +87,7 @@ class Subrange(object):
         else:
             self.array[ self.start_offset + key ] = value
 
-class RawField(object):
+class RawField(Field):
     def __init__(self, start, size):
         self.start = start
         self.size = size
@@ -98,7 +98,7 @@ class RawField(object):
     def __set__(self, instance, value):
         raise ValueError("Cannot set a raw type field directly")
 
-class NestedStructField(object):
+class NestedStructField(Field):
     def __init__(self, start, nested_structure_type):
         self.start = start
         self.nested_structure_type = nested_structure_type
@@ -125,7 +125,7 @@ class StructTemplate(ClassWithLength):
         len = 0
         for attr in cls.__dict__.values():
             if isinstance(attr, Field):
-                len += attr.size
+                len = max(len, attr.start + attr.size)
         return len
 
     def __len__(self):

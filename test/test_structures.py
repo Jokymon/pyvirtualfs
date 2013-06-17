@@ -33,6 +33,25 @@ class TestSubrange:
 
         assert array == [0, 1, 2, 3, 4, 5, 6, 42, 42, 42, 42, 11, 12, 13, 14, 15, 16, 17, 18, 19]
 
+class TestStructClass:
+    def testCompactLength(self):
+        class StructureUnderTest(structures.StructTemplate):
+            field1 = structures.Int8Field(0)
+            field2 = structures.StringField(1, 5)
+            field3 = structures.Int16Field(6)
+            field4 = structures.Int8Field(8)
+
+        assert len(StructureUnderTest) == 9
+
+    def testSparseLength(self):
+        class StructureUnderTest(structures.StructTemplate):
+            field1 = structures.RawField(0, 4)
+            field2 = structures.Int8Field(7)
+            field3 = structures.Int16Field(8)
+            field4 = structures.StringField(15, 5)
+
+        assert len(StructureUnderTest) == 20
+
 class TestIntFields:
     def testGettingInts(self):
         class StructureUnderTest(structures.StructTemplate):
@@ -118,6 +137,7 @@ class TestRawField:
         struct = StructureUnderTest(array, 3)
 
         assert struct.raw1[0] == 3
+        assert struct.raw1[1] == 4
         assert struct.raw2[2:5] == [12, 13, 14]
 
     def testSettingRawField(self):
