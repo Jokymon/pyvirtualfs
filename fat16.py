@@ -6,13 +6,6 @@ import structures
 #####################################################################################################
 # FAT16 specific data structures
 
-class FAT16DirectoryEntry(structures.StructTemplate):
-    basename      = structures.StringField(0, 8)
-    suffix        = structures.StringField(8, 3)
-    attributes    = structures.UInt8Field(11)
-    start_cluster = structures.UInt16Field(26)
-    size          = structures.UInt32Field(28)
-
 class FAT16Structure(structures.StructTemplate):
     jump_code = structures.RawField(0, 3)
     oem_name  = structures.StringField(3, 8)
@@ -121,7 +114,7 @@ class FAT16Filesystem:
 
         # calculate the byte address of cluster 2
         self.start_of_data = 512 * (self.info.number_of_fats*self.info.sectors_per_fat + 1 ) # root directory start
-        self.start_of_data += self.info.max_root_dir_entries*32 # add size of root directory
+        self.start_of_data += self.info.max_root_dir_entries * len(FAT16DirectoryEntry)
 
         self.root_entries = {}
         root_directory_start = 512 * ( self.info.number_of_fats*self.info.sectors_per_fat+1 )
@@ -146,12 +139,35 @@ class FAT16Filesystem:
         fd.write("Maximum number of root directory entries: %u\n" % self.info.max_root_dir_entries)
         fd.write("Start byte of data: %u\n" % self.start_of_data)
 
+        fd.write("Files: %s\n" % self._listdir( self.get_root_directory_address() ))
+
+    def get_root_directory_address(self):
+        """Returns the starting byte for the root directory inside the
+        partition containing this file system"""
+        root_address = self.info.bytes_per_sector * self.info.reserved_sectors
+        root_address += self.info.number_of_fats * self.info.sectors_per_fat * self.info.bytes_per_sector
+        return root_address
+
     def get_fat_entry(self, fat_no = 0, fat_entry = 0):
         fat_start = 512*self.reserved_sectors + fat_no*(512*self.info.sectors_per_fat)
-        return list2word( self.partition[ fat_start + 2*fat_entry : fat_start + 2*fat_entry + 2] )
+        return list2word( self.get_root_directory_address() )
 
     def listdir(self, directory):
         pass
+
+    def _listdir(self, start_address):
+        """Return a list of all files in the directory table starting at
+        start_address inside this file system"""
+        entries = []
+
+        address = start_address
+        entry = FAT16DirectoryEntry(self.partition, address)
+        while entry.file_name[0] != '\0':
+            if entry.file_name[0] != '\x2e' and (entry.file_attributes & 0x8) != 0x8:
+                entries.append( "%s.%s" % (entry.file_name.strip(), entry.file_extension.strip()) )
+            address += len(FAT16DirectoryEntry)
+            entry = FAT16DirectoryEntry(self.partition, address)
+        return entries
 
     def open(self, fname, mode="r"):
         path_elements = fname.split("/")
