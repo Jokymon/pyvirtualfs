@@ -4,7 +4,7 @@ from tools import *
 import structures
 
 #####################################################################################################
-# Implementation of the FAT16 specific classes
+# FAT16 specific data structures
 
 class FAT16DirectoryEntry(structures.StructTemplate):
     basename      = structures.StringField(0, 8)
@@ -12,6 +12,31 @@ class FAT16DirectoryEntry(structures.StructTemplate):
     attributes    = structures.UInt8Field(11)
     start_cluster = structures.UInt16Field(26)
     size          = structures.UInt32Field(28)
+
+class FAT16Structure(structures.StructTemplate):
+    jump_code = structures.RawField(0, 3)
+    oem_name  = structures.StringField(3, 8)
+    bytes_per_sector        = structures.UInt16Field(11)
+    sectors_per_cluster     = structures.UInt8Field(13)
+    reserved_sectors        = structures.UInt16Field(14)
+    number_of_fats          = structures.UInt8Field(16)
+    max_root_dir_entries    = structures.UInt16Field(17)
+    sectors_per_fat         = structures.UInt16Field(22)
+
+class FAT16DirectoryEntry(structures.StructTemplate):
+    file_name       = structures.StringField(0, 8)
+    file_extension  = structures.StringField(8, 3)
+    file_attributes = structures.UInt8(11)
+    create_time     = structures.UInt16(14)
+    create_date     = structures.UInt16(16)
+
+    modified_time   = structures.UInt16(22)
+    modified_date   = structures.UInt16(24)
+    start_cluster   = structures.UInt16(26)
+    file_size       = structures.UInt32(28)
+
+#####################################################################################################
+# Implementation of the FAT16 specific classes
 
 class FAT16FileInfo(filesystem.FileInfo):
     def __init__(self):
@@ -88,16 +113,6 @@ class FAT16FileHandle(filesystem.FileHandle):
     def write(self, s):
         pass
 
-class FAT16Structure(structures.StructTemplate):
-    jump_code = structures.RawField(0, 3)
-    oem_name  = structures.StringField(3, 8)
-    bytes_per_sector        = structures.UInt16Field(11)
-    sectors_per_cluster     = structures.UInt8Field(13)
-    reserved_sectors        = structures.UInt16Field(14)
-    number_of_fats          = structures.UInt8Field(16)
-    max_root_dir_entries    = structures.UInt16Field(17)
-    sectors_per_fat         = structures.UInt16Field(22)
-    
 class FAT16Filesystem:
     def __init__(self, partition):
         self.partition = partition
