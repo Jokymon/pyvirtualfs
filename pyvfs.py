@@ -70,13 +70,15 @@ class PyvfsCommandInterpreter(CommandInterpreter):
 
         for i in range(4):      # TODO: take the amount of partitions from the actual image
             pi = hd.get_partition_info(i)
-            print(" ***** Partition %u *****" % i)
+            print("***** Partition %u *****" % i)
             pi.dump()
 
-        if level>=2:
-            for i in range(4):
-                fs = hd.get_filesystem(i)
-                fs.dump()
+            if level>=2:
+                try:
+                    fs = hd.get_filesystem(i)
+                    fs.dump()
+                except:
+                    pass
 
     from commands import FdiskCommand
     fdisk = FdiskCommand()
