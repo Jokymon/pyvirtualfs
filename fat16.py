@@ -26,14 +26,14 @@ class FAT16Structure(structures.StructTemplate):
 class FAT16DirectoryEntry(structures.StructTemplate):
     file_name       = structures.StringField(0, 8)
     file_extension  = structures.StringField(8, 3)
-    file_attributes = structures.UInt8(11)
-    create_time     = structures.UInt16(14)
-    create_date     = structures.UInt16(16)
+    file_attributes = structures.UInt8Field(11)
+    create_time     = structures.UInt16Field(14)
+    create_date     = structures.UInt16Field(16)
 
-    modified_time   = structures.UInt16(22)
-    modified_date   = structures.UInt16(24)
-    start_cluster   = structures.UInt16(26)
-    file_size       = structures.UInt32(28)
+    modified_time   = structures.UInt16Field(22)
+    modified_date   = structures.UInt16Field(24)
+    start_cluster   = structures.UInt16Field(26)
+    file_size       = structures.UInt32Field(28)
 
 #####################################################################################################
 # Implementation of the FAT16 specific classes
