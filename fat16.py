@@ -81,14 +81,13 @@ class FAT16FileHandle(filesystem.FileHandle):
         fat16 = self._fat16
         data = ""
         pos_in_cluster = self._currentpos % (fat16.info.sectors_per_cluster*512)
-        cluster_index = self._currentpos / (fat16.info.sectors_per_cluster*512)
+        cluster_index = int(self._currentpos / (fat16.info.sectors_per_cluster*512))
         # TODO: also add an upper bound for the actual size of the file
         # Here we only read as much data until the boundary of the current cluster
         readsize = min( fat16.info.sectors_per_cluster*512 - pos_in_cluster, size )
         while readsize != 0:
-            start_byte = (self._clusters[cluster_index]-2) * fat16.info.sectors_per_cluster * 512
-            start_byte += fat16.start_of_data
-            data += fat16[ start_byte : start_byte + readsize ]
+            start_byte = fat16.get_start_byte_from_cluster( self._clusters[cluster_index] )
+            data += list2string(fat16.partition[ start_byte : start_byte + readsize ])
 
             # update the current position
             self._currentpos += readsize
@@ -113,11 +112,10 @@ class FAT16Filesystem:
         self.info = FAT16Structure(self.partition, 0)
 
         # calculate the byte address of cluster 2
-        self.start_of_data = 512 * (self.info.number_of_fats*self.info.sectors_per_fat + 1 ) # root directory start
-        self.start_of_data += self.info.max_root_dir_entries * len(FAT16DirectoryEntry)
+        self.start_of_data = self.get_root_directory_address() + self.info.max_root_dir_entries * len(FAT16DirectoryEntry)
 
         self.root_entries = {}
-        root_directory_start = 512 * ( self.info.number_of_fats*self.info.sectors_per_fat+1 )
+        root_directory_start = self.get_root_directory_address()
         i = 0
         fi = FAT16FileInfo()
         fi.parse_entry(self, self.partition[root_directory_start + i*32 : root_directory_start + (i+1)*32])
@@ -149,8 +147,15 @@ class FAT16Filesystem:
         return root_address
 
     def get_fat_entry(self, fat_no = 0, fat_entry = 0):
-        fat_start = 512*self.reserved_sectors + fat_no*(512*self.info.sectors_per_fat)
-        return list2word( self.get_root_directory_address() )
+        fat_start = self.info.bytes_per_sector * self.info.reserved_sectors
+        return list2word( self.partition[ fat_start + fat_entry*2: fat_start+fat_entry*2 + 2 ] )
+
+    def get_start_byte_from_cluster(self, cluster):
+        """calculate the start byte of the given cluster number inside the
+        partition containing this file system"""
+        start_byte = self.start_of_data
+        start_byte += (cluster-2) * self.info.sectors_per_cluster * self.info.bytes_per_sector
+        return start_byte
 
     def listdir(self, directory):
         pass
