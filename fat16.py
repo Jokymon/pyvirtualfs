@@ -180,7 +180,7 @@ class FAT16Filesystem:
         for dname in path_elements[:-1]:
             if dname in dirs.keys():
                 # open dir
-                raise "Subdirectories not yet implemented"
+                raise IOError("Subdirectories not yet implemented")
             else:
                 raise IOError("No such file or directory: '%s'" % fname)
         if path_elements[-1] in dirs.keys():
