@@ -20,7 +20,7 @@ class PartitionInfo:
             dword2list(self.sectors_in_partition)
         return record
 
-    def dump(self, fd=sys.stdout):
+    def dump(self, fd=sys.stdout, level=1):
         if self.bootable==0x80:
             fd.write("  bootable\n")
         elif self.bootable==0x0:
@@ -112,9 +112,21 @@ class Harddisk:
         self._disk_signature = list2dword( mbr[440:444] )
         self._mbr_signature  = list2word( mbr[510:512] )
 
-    def dump(self, fd=sys.stdout):
+    def dump(self, fd=sys.stdout, level=1):
         fd.write("Disk signature: %X\n" % self._disk_signature)
         fd.write("MBR signature: %X\n" % self._mbr_signature)
+
+        for i in range(4):      # TODO: take the amount of partitions from the actual image
+            pi = self.get_partition_info(i)
+            print("***** Partition %u *****" % i)
+            pi.dump()
+
+            if level>=2:
+                try:
+                    fs = self.get_filesystem(i)
+                    fs.dump()
+                except UnknownFileSystem:
+                    pass
 
     def update_image(self, disk_signature = None):
         """Update the disk image file with the current partition records and an
@@ -155,7 +167,7 @@ class VolumeDescriptor:
         self.standard_id = entry[1:6]
         self.version = ord(entry[6])
     
-    def dump(self, fd=sys.stdout):
+    def dump(self, fd=sys.stdout, level=1):
         fd.write("  type = %u\n" % self.type)
         fd.write("  std_id = %s\n" % self.standard_id)
         fd.write("  version = %u\n" % self.version)
@@ -175,7 +187,7 @@ class NAryVolumeDescriptor(VolumeDescriptor):
         self.application_identifier = entry[574:702]
         self.copyright_file_identifier = entry[702:739]
 
-    def dump(self, fd=sys.stdout):
+    def dump(self, fd=sys.stdout, level=1):
         if self.type==1:
             fd.write("Primary Volume Descriptor\n")
         else:
@@ -197,7 +209,7 @@ class VolumeDescriptorSetTerminator(VolumeDescriptor):
     def __init__(self, entry):
         VolumeDescriptor.__init__(self, entry)
 
-    def dump(self, fd=sys.stdout):
+    def dump(self, fd=sys.stdout, level=1):
         fd.write("!!! Volume Descriptor Set Terminator !!!\n")
         VolumeDescriptor.dump(self, fd)
 
