@@ -243,8 +243,9 @@ def createPhysicalImageFromImageType(imagetype, image):
     """Create a physical representation of the given disk image based on the
     indicated imagetype. For example from image type 'hd' a Harddisk object is
     created."""
-    if imagetype=="hd":
+    from image_path import ImagePath
+    if imagetype==ImagePath.IMAGE_TYPE_HD:
         return Harddisk(image)
-    elif imagetype=="cdrom":
+    elif imagetype==ImagePath.IMAGE_TYPE_CDROM:
         return CdRom(image)
     raise UnknownFileSystem("Image type %s is not supported" % imagetype)

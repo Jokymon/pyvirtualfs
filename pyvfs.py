@@ -62,11 +62,11 @@ class PyvfsCommandInterpreter(CommandInterpreter):
 
         level = int(parameters[1][1:])
 
-        from physical import DiskImage, Harddisk
+        from physical import DiskImage, createPhysicalImageFromImageType
 
         image = DiskImage( img_path.imagefile, "a" )
-        hd = Harddisk( image )
-        hd.dump(level=level)
+        phys = createPhysicalImageFromImageType( img_path.imagetype, image )
+        phys.dump(level=level)
 
     from commands import FdiskCommand
     fdisk = FdiskCommand()

@@ -9,6 +9,7 @@ class ImagePath:
     IMAGE_TYPE_HD = 1
     IMAGE_TYPE_FD = 2
     IMAGE_TYPE_CDROM = 3
+    IMAGE_TYPE_INVALID = 255
 
     def __init__(self, imagefile, imagetype=IMAGE_TYPE_HD, partition=None, filepath="/"):
         self.imagefile = imagefile
