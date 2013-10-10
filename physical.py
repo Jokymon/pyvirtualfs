@@ -161,11 +161,13 @@ class Harddisk:
             raise UnknownFileSystem("No filesystem implementation for type %x" % pi.type)
 
 #--------------------------------------------------------------------------------------------
+from iso9660 import *
+
 class VolumeDescriptor:
     def __init__(self, entry):
-        self.type = ord(entry[0])
+        self.type = entry[0]
         self.standard_id = entry[1:6]
-        self.version = ord(entry[6])
+        self.version = entry[6]
     
     def dump(self, fd=sys.stdout, level=1):
         fd.write("  type = %u\n" % self.type)
@@ -214,9 +216,9 @@ class VolumeDescriptorSetTerminator(VolumeDescriptor):
         VolumeDescriptor.dump(self, fd)
 
 def parseVolumeDescriptor(entry):
-    if ord(entry[0]) in [1, 2]:
+    if entry[0] in [1, 2]:
         return NAryVolumeDescriptor(entry)
-    elif ord(entry[0])==255:
+    elif entry[0]==ISO9660_DESCRIPTOR_TYPE_TERMINATOR:
         return VolumeDescriptorSetTerminator(entry)
     else:
         return VolumeDescriptor(entry)
@@ -237,4 +239,12 @@ class CdRom:
             vd = parseVolumeDescriptor(self._image[offset:offset+2048])
             vd.dump()
 
-        
+def createPhysicalImageFromImageType(imagetype, image):
+    """Create a physical representation of the given disk image based on the
+    indicated imagetype. For example from image type 'hd' a Harddisk object is
+    created."""
+    if imagetype=="hd":
+        return Harddisk(image)
+    elif imagetype=="cdrom":
+        return CdRom(image)
+    raise UnknownFileSystem("Image type %s is not supported" % imagetype)
