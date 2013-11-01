@@ -3,6 +3,12 @@ import os, sys
 from tools import *
 import structures
 
+FAT16_CLUSTER_FREE = 0x0
+FAT16_CLUSTER_RESERVED = 0x1
+FAT16_CLUSTER_HIGHEST = 0xffef
+FAT16_CLUSTER_BADSECTOR = 0xfff6
+FAT16_CLUSTER_END_OF_CHAIN = 0xfff8
+
 #####################################################################################################
 # FAT16 specific data structures
 
@@ -67,7 +73,7 @@ class FAT16FileHandle(filesystem.FileHandle):
         # collect the clusters for this file
         self._clusters = []
         cl = self._fileinfo.start_cluster
-        while cl>=2 and cl<=0xffef:
+        while cl>=2 and cl<=FAT16_CLUSTER_HIGHEST:
             self._clusters.append(cl)
             cl = self._fat16.get_fat_entry(0, cl)
 
