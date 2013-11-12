@@ -163,6 +163,13 @@ class FAT16Filesystem:
         start_byte += (cluster-2) * self.info.sectors_per_cluster * self.info.bytes_per_sector
         return start_byte
 
+    def get_cluster_pos(self, file_position):
+        """Convert a position within a file into a tuple consisting of a
+        cluster number and a position within that cluster"""
+        cluster_index = file_position // (self.info.sectors_per_cluster * self.info.bytes_per_sector)
+        pos_in_cluster = file_position % (self.info.sectors_per_cluster * self.info.bytes_per_sector)
+        return (cluster_index, pos_in_cluster)
+
     def listdir(self, directory):
         pass
 
@@ -179,6 +186,17 @@ class FAT16Filesystem:
             address += len(FAT16DirectoryEntry)
             entry = FAT16DirectoryEntry(self.partition, address)
         return entries
+
+    def format(self, oem_name="", bytes_per_sector = 512,
+               sectors_per_cluster=4, reserved_sectors=2, number_of_fats=1,
+               sectors_per_fat=8):
+        self.info.jump_code[0:3] = [0xEB, 0x3C, 0x90]
+        self.info.oem_name = oem_name
+        self.info.bytes_per_sector = bytes_per_sector
+        self.info.sectors_per_cluster = sectors_per_cluster
+        self.info.reserved_sectors = reserved_sectors
+        self.info.number_of_fats = number_of_fats
+        self.info.sectors_per_fat = sectors_per_fat
 
     def open(self, fname, mode="r"):
         path_elements = fname.split("/")
