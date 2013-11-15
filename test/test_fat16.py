@@ -29,3 +29,10 @@ class TestFat16Filesystem:
         (cluster, position) = fat.get_cluster_pos(4096)
         assert cluster == 1
         assert position == 0
+
+class TestFileSystemAPI:
+    def testOpenForReadMissingFile(self):
+        fat = FAT16Filesystem(1024 * [0])
+        fat.format()
+
+        pytest.raises( IOError, fat.open, "somefile.txt", "r" )
