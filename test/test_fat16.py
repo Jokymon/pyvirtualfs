@@ -35,4 +35,5 @@ class TestFileSystemAPI:
         fat = FAT16Filesystem(1024 * [0])
         fat.format()
 
+        assert fat.listdir("/") == []
         pytest.raises( IOError, fat.open, "somefile.txt", "r" )

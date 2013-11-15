@@ -198,6 +198,9 @@ class FAT16Filesystem:
         self.info.number_of_fats = number_of_fats
         self.info.sectors_per_fat = sectors_per_fat
 
+    def listdir(self, path):
+        return []
+
     def open(self, fname, mode="r"):
         path_elements = fname.split("/")
         dirs = self.root_entries
