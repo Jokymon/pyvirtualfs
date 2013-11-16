@@ -1,25 +1,25 @@
 import pytest
 from fat16 import *
 
+@pytest.fixture
+def formatted_partition():
+    fat = FAT16Filesystem(1024 * [0])
+    fat.format()
+    return fat
+
 class TestFat16Filesystem:
-    def testClusterPosition_0(self):
-        fat = FAT16Filesystem(1024 * [0])
-        fat.format()
-        (cluster, position) = fat.get_cluster_pos(0)
+    def testClusterPosition_0(self, formatted_partition):
+        (cluster, position) = formatted_partition.get_cluster_pos(0)
         assert cluster == 0
         assert position == 0
 
-    def testClusterPosition_start_of_cluster1(self):
-        fat = FAT16Filesystem(1024 * [0])
-        fat.format()
-        (cluster, position) = fat.get_cluster_pos(2048)
+    def testClusterPosition_start_of_cluster1(self, formatted_partition):
+        (cluster, position) = formatted_partition.get_cluster_pos(2048)
         assert cluster == 1
         assert position == 0
 
-    def testClusterPosition_somewhere_in_cluster2(self):
-        fat = FAT16Filesystem(1024 * [0])
-        fat.format()
-        (cluster, position) = fat.get_cluster_pos(4500)
+    def testClusterPosition_somewhere_in_cluster2(self, formatted_partition):
+        (cluster, position) = formatted_partition.get_cluster_pos(4500)
         assert cluster == 2
         assert position == 404
 
@@ -31,9 +31,6 @@ class TestFat16Filesystem:
         assert position == 0
 
 class TestFileSystemAPI:
-    def testOpenForReadMissingFile(self):
-        fat = FAT16Filesystem(1024 * [0])
-        fat.format()
-
-        assert fat.listdir("/") == []
-        pytest.raises( IOError, fat.open, "somefile.txt", "r" )
+    def testOpenForReadMissingFile(self, formatted_partition):
+        assert formatted_partition.listdir("/") == []
+        pytest.raises( IOError, formatted_partition.open, "somefile.txt", "r" )
