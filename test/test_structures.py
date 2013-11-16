@@ -155,3 +155,28 @@ class TestRawField:
         assert array[3] == 42
         assert array[4] == 43
         assert array[5] == 5
+
+class TestStringfield:
+    def testGettingStringField(self):
+        class StructureUnderTest(structures.StructTemplate):
+            s1 = structures.StringField(0, 5)
+            s2 = structures.StringField(5, 1)
+
+        array = list(map(ord, "part1k"))
+        struct = StructureUnderTest(array, 0)
+
+        assert struct.s1 == "part1"
+        assert struct.s2 == "k"
+
+    def testGettingZeroCharacterStringField(self):
+        class StructureUnderTest(structures.StructTemplate):
+            s1 = structures.StringField(0, 5)
+            s2 = structures.StringField(5, 1)
+
+        array = 6*[0]
+        struct = StructureUnderTest(array, 0)
+
+        assert struct.s1 == 5*"\0"
+        assert struct.s1[0] == "\0"
+        assert struct.s2 == "\0"
+
