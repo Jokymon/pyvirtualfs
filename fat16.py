@@ -170,8 +170,23 @@ class FAT16Filesystem:
         pos_in_cluster = file_position % (self.info.sectors_per_cluster * self.info.bytes_per_sector)
         return (cluster_index, pos_in_cluster)
 
-    def listdir(self, directory):
-        pass
+    def _create_directory_entry(self, start_address, filename):
+        address = start_address
+        entry = FAT16DirectoryEntry(self.partition, address)
+        while entry.file_name[0] != '\0':
+            address += len(FAT16DirectoryEntry)
+            entry = FAT16DirectoryEntry(self.partition, address)
+        # TODO: check for directory size overflow
+        if '.' in filename:
+            (basename, suffix) = filename.split('.')
+        else:
+            (basename, suffix) = (filename, "")
+        entry.file_name = (basename.upper() + 8*" ")[:8]
+        entry.file_extension = (suffix.upper() + 3*" ")[:3]
+        # TODO add creation time and attributes
+        f = FAT16FileInfo()
+        f.parse_entry(self, self.partition[address:address+32])
+        return f
 
     def _listdir(self, start_address):
         """Return a list of all files in the directory table starting at
@@ -199,7 +214,7 @@ class FAT16Filesystem:
         self.info.sectors_per_fat = sectors_per_fat
 
     def listdir(self, path):
-        return []
+        return self._listdir(self.get_root_directory_address())
 
     def open(self, fname, mode="r"):
         path_elements = fname.split("/")
@@ -213,6 +228,8 @@ class FAT16Filesystem:
         if path_elements[-1] in dirs.keys():
             # open the file and return a file handle
             return FAT16FileHandle(self, dirs[path_elements[-1]])
+        elif mode=="w":
+            return self._create_directory_entry(self.get_root_directory_address(), fname)
         else:
             raise IOError("No such file or directory: '%s'" % fname)
 

@@ -34,3 +34,7 @@ class TestFileSystemAPI:
     def testOpenForReadMissingFile(self, formatted_partition):
         assert formatted_partition.listdir("/") == []
         pytest.raises( IOError, formatted_partition.open, "somefile.txt", "r" )
+
+    def testCreateNewFile(self, formatted_partition):
+        handle = formatted_partition.open("somefile.txt", "w")
+        assert formatted_partition.listdir("/") == ["SOMEFILE.TXT"]
