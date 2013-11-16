@@ -3,7 +3,7 @@ from fat16 import *
 
 @pytest.fixture
 def formatted_partition():
-    fat = FAT16Filesystem(1024 * [0])
+    fat = FAT16Filesystem(1024*1024 * [0])
     fat.format()
     return fat
 
