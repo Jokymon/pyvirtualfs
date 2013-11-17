@@ -38,3 +38,10 @@ class TestFileSystemAPI:
     def testCreateNewFile(self, formatted_partition):
         handle = formatted_partition.open("somefile.txt", "w")
         assert formatted_partition.listdir("/") == ["SOMEFILE.TXT"]
+
+    def testOpenForReadExistingFile(self, formatted_partition):
+        handle = formatted_partition.open("somefile.txt", "w")
+        handle.close()
+
+        handle = formatted_partition.open("somefile.txt", "r")
+        assert handle != None

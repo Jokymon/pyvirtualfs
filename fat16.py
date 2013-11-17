@@ -37,34 +37,6 @@ class FAT16DirectoryEntry(structures.StructTemplate):
 #####################################################################################################
 # Implementation of the FAT16 specific classes
 
-class FAT16FileInfo(filesystem.FileInfo):
-    def __init__(self):
-        filesystem.FileInfo.__init__(self)
-
-    def parse_entry(self, fat16, fat16_entry):
-        # We need a reference to the FAT16 to calculate the location of the
-        # file inside the partition
-        basename = list2string(fat16_entry[0:8])
-        suffix = list2string(fat16_entry[8:11])
-        self.filename = "%s.%s" % ( basename, suffix )
-        attributes = fat16_entry[11]
-        if attributes & 0x1:
-            self.attributes.append("read_only")
-        if attributes & 0x2:
-            self.attributes.append("hidden")
-        if attributes & 0x4:
-            self.attributes.append("system")
-        if attributes & 0x10:
-            self.attributes.append("directory")
-        if attributes & 0x20:
-            self.attributes.append("archive")
-        # determine the start byte of this file entry
-        self.start_cluster = list2word(fat16_entry[26:28]) 
-        self.start_byte = (self.start_cluster-2) * fat16.info.sectors_per_cluster * 512
-        self.start_byte += fat16.start_of_data
-
-        self.size = list2dword(fat16_entry[28:32])
-
 class FAT16FileHandle(filesystem.FileHandle):
     def __init__(self, fat16, fileinfo):
         filesystem.FileHandle.__init__(self)
@@ -82,7 +54,7 @@ class FAT16FileHandle(filesystem.FileHandle):
 
     def read(self, size=None):
         if size==None:
-            size = self._fileinfo.size
+            size = self._fileinfo.file_size
 
         fat16 = self._fat16
         data = ""
@@ -120,17 +92,6 @@ class FAT16Filesystem:
         # calculate the byte address of cluster 2
         self.start_of_data = self.get_root_directory_address() + self.info.max_root_dir_entries * len(FAT16DirectoryEntry)
 
-        self.root_entries = {}
-        root_directory_start = self.get_root_directory_address()
-        i = 0
-        fi = FAT16FileInfo()
-        fi.parse_entry(self, self.partition[root_directory_start + i*32 : root_directory_start + (i+1)*32])
-        while fi.filename[0] != '\0':
-            self.root_entries[fi.filename] = fi
-            i += 1
-            fi = FAT16FileInfo()
-            fi.parse_entry(self, self.partition[root_directory_start + i*32 : root_directory_start + (i+1)*32])
-
     def dump(self, fd=sys.stdout):
         fd.write("Content of the FAT:\n")
 
@@ -143,7 +104,8 @@ class FAT16Filesystem:
         fd.write("Maximum number of root directory entries: %u\n" % self.info.max_root_dir_entries)
         fd.write("Start byte of data: %u\n" % self.start_of_data)
 
-        fd.write("Files: %s\n" % self._listdir( self.get_root_directory_address() ))
+        entries = self._listdir( self.get_root_directory_address() )
+        fd.write("Files: %s\n" % list(entries.keys()))
 
     def get_root_directory_address(self):
         """Returns the starting byte for the root directory inside the
@@ -184,20 +146,19 @@ class FAT16Filesystem:
         entry.file_name = (basename.upper() + 8*" ")[:8]
         entry.file_extension = (suffix.upper() + 3*" ")[:3]
         # TODO add creation time and attributes
-        f = FAT16FileInfo()
-        f.parse_entry(self, self.partition[address:address+32])
-        return f
+        return FAT16FileHandle(self, entry)
 
     def _listdir(self, start_address):
         """Return a list of all files in the directory table starting at
         start_address inside this file system"""
-        entries = []
+        entries = {}
 
         address = start_address
         entry = FAT16DirectoryEntry(self.partition, address)
         while entry.file_name[0] != '\0':
             if entry.file_name[0] != '\x2e' and (entry.file_attributes & 0x8) != 0x8:
-                entries.append( "%s.%s" % (entry.file_name.strip(), entry.file_extension.strip()) )
+                name = "%s.%s" % (entry.file_name.strip(), entry.file_extension.strip())
+                entries[name] = entry
             address += len(FAT16DirectoryEntry)
             entry = FAT16DirectoryEntry(self.partition, address)
         return entries
@@ -214,20 +175,23 @@ class FAT16Filesystem:
         self.info.sectors_per_fat = sectors_per_fat
 
     def listdir(self, path):
-        return self._listdir(self.get_root_directory_address())
+        entries = self._listdir(self.get_root_directory_address())
+        return list(entries.keys())
+
 
     def open(self, fname, mode="r"):
+        fname = fname.upper()
         path_elements = fname.split("/")
-        dirs = self.root_entries
+        entries = self._listdir(self.get_root_directory_address())
         for dname in path_elements[:-1]:
             if dname in dirs.keys():
                 # open dir
                 raise IOError("Subdirectories not yet implemented")
             else:
                 raise IOError("No such file or directory: '%s'" % fname)
-        if path_elements[-1] in dirs.keys():
+        if path_elements[-1] in entries.keys():
             # open the file and return a file handle
-            return FAT16FileHandle(self, dirs[path_elements[-1]])
+            return FAT16FileHandle(self, entries[path_elements[-1]])
         elif mode=="w":
             return self._create_directory_entry(self.get_root_directory_address(), fname)
         else:
