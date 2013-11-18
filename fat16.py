@@ -9,6 +9,10 @@ FAT16_CLUSTER_HIGHEST = 0xffef
 FAT16_CLUSTER_BADSECTOR = 0xfff6
 FAT16_CLUSTER_END_OF_CHAIN = 0xfff8
 
+#--------------------------
+# TODO:
+# - error handling when parition size is too small or when parition size is overrun
+
 #####################################################################################################
 # FAT16 specific data structures
 
@@ -116,8 +120,12 @@ class FAT16Filesystem:
 
     def get_fat_entry(self, fat_no = 0, fat_entry = 0):
         fat_start = self.info.bytes_per_sector * self.info.reserved_sectors
-        return list2word( self.partition[ fat_start + fat_entry*2: fat_start+fat_entry*2 + 2 ] )
+        return list2word( self.partition[ (fat_start + fat_entry*2):(fat_start+fat_entry*2 + 2) ] )
 
+    def set_fat_entry(self, fat_no=0, fat_entry=0, value=0):
+        fat_start = self.info.bytes_per_sector * self.info.reserved_sectors
+        self.partition[ fat_start + fat_entry*2: fat_start+fat_entry*2 + 2 ] = word2list(value)
+ 
     def get_start_byte_from_cluster(self, cluster):
         """calculate the start byte of the given cluster number inside the
         partition containing this file system"""
@@ -131,6 +139,16 @@ class FAT16Filesystem:
         cluster_index = file_position // (self.info.sectors_per_cluster * self.info.bytes_per_sector)
         pos_in_cluster = file_position % (self.info.sectors_per_cluster * self.info.bytes_per_sector)
         return (cluster_index, pos_in_cluster)
+
+    def _allocate_cluster(self):
+        i = 2 # start from first real cluster
+        while i <= FAT16_CLUSTER_HIGHEST:
+            if self.get_fat_entry(0, i) == FAT16_CLUSTER_FREE:
+                # reserve this cluster until the allocator used it properly
+                self.set_fat_entry(0, i, FAT16_CLUSTER_RESERVED)
+                return i
+            i += 1
+        raise IOError("No free clusters left on partition")
 
     def _create_directory_entry(self, start_address, filename):
         address = start_address
