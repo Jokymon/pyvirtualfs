@@ -33,7 +33,7 @@ class TestFat16Filesystem:
     def testAllocatingCluster(self, formatted_partition):
         cluster = formatted_partition._allocate_cluster()
         assert cluster != 0
-        assert formatted_partition.get_fat_entry(0, 2) != 0
+        assert formatted_partition.get_fat_entry(2) != 0
 
 class TestFileSystemAPI:
     def testOpenForReadMissingFile(self, formatted_partition):

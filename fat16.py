@@ -118,11 +118,11 @@ class FAT16Filesystem:
         root_address += self.info.number_of_fats * self.info.sectors_per_fat * self.info.bytes_per_sector
         return root_address
 
-    def get_fat_entry(self, fat_no = 0, fat_entry = 0):
+    def get_fat_entry(self, fat_entry, fat_no=0):
         fat_start = self.info.bytes_per_sector * self.info.reserved_sectors
         return list2word( self.partition[ (fat_start + fat_entry*2):(fat_start+fat_entry*2 + 2) ] )
 
-    def set_fat_entry(self, fat_no=0, fat_entry=0, value=0):
+    def set_fat_entry(self, fat_entry, value, fat_no=0):
         fat_start = self.info.bytes_per_sector * self.info.reserved_sectors
         self.partition[ fat_start + fat_entry*2: fat_start+fat_entry*2 + 2 ] = word2list(value)
  
@@ -143,9 +143,9 @@ class FAT16Filesystem:
     def _allocate_cluster(self):
         i = 2 # start from first real cluster
         while i <= FAT16_CLUSTER_HIGHEST:
-            if self.get_fat_entry(0, i) == FAT16_CLUSTER_FREE:
+            if self.get_fat_entry(i) == FAT16_CLUSTER_FREE:
                 # reserve this cluster until the allocator used it properly
-                self.set_fat_entry(0, i, FAT16_CLUSTER_RESERVED)
+                self.set_fat_entry(i, FAT16_CLUSTER_RESERVED)
                 return i
             i += 1
         raise IOError("No free clusters left on partition")
