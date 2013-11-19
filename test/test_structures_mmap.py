@@ -1,22 +1,26 @@
+import mmap
+import os
 import pytest
 import structures
 from physical import DiskImage
+
 
 class StructureUnderTest(structures.StructTemplate):
     a_byte = structures.UInt8Field(0)
     a_word = structures.UInt16Field(1)
     a_string = structures.StringField(3, 10)
 
+
 @pytest.fixture
 def mmaped_file(tmpdir):
-    import mmap, os
-    f = open( str(tmpdir.join("mmapfile.bin")), "wb" )
+    f = open(str(tmpdir.join("mmapfile.bin")), "wb")
     f.seek(20, os.SEEK_SET)
     f.write("\0".encode("utf-8"))
     f.close()
 
-    image = DiskImage( str(tmpdir.join("mmapfile.bin")), "a" )
+    image = DiskImage(str(tmpdir.join("mmapfile.bin")), "a")
     return image
+
 
 class TestStructuresWithMmap:
     def test_structure_with_diskimage(self, mmaped_file):

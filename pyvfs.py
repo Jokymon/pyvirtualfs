@@ -1,6 +1,7 @@
 import string
 from command_tools import command, CommandInterpreter
 
+
 class PyvfsCommandInterpreter(CommandInterpreter):
     """PyVirtualFS"""
 
@@ -32,11 +33,11 @@ class PyvfsCommandInterpreter(CommandInterpreter):
                             "M": 1024*1024,
                             "G": 1024*1024*1024}[suffix]
 
-        if len(parameters)<2:
+        if len(parameters) < 2:
             print("'create' command requires a filename and a size")
             return
         filename = parameters[0]
-        size = parse_size( parameters[1] )
+        size = parse_size(parameters[1])
         from commands import CreateCommand
         cmd = CreateCommand(filename, size)
         cmd.execute()
@@ -45,7 +46,6 @@ class PyvfsCommandInterpreter(CommandInterpreter):
     def mkfs(self, parameters):
         """Create file systems in existing partitions"""
         pass
-
 
     @command
     def dump(self, parameters):
@@ -64,15 +64,15 @@ class PyvfsCommandInterpreter(CommandInterpreter):
 
         from physical import DiskImage, createPhysicalImageFromImageType
 
-        image = DiskImage( img_path.imagefile, "a" )
-        phys = createPhysicalImageFromImageType( img_path.imagetype, image )
+        image = DiskImage(img_path.imagefile, "a")
+        phys = createPhysicalImageFromImageType(img_path.imagetype, image)
         phys.dump(level=level)
 
     from commands import FdiskCommand
     fdisk = FdiskCommand()
 
-if __name__=="__main__":
+if __name__ == "__main__":
     import sys
 
     cmd_interpreter = PyvfsCommandInterpreter()
-    cmd_interpreter.interprete( sys.argv[1:] )
+    cmd_interpreter.interprete(sys.argv[1:])

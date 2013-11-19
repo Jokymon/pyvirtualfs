@@ -1,6 +1,7 @@
 import pytest
 import structures
 
+
 class TestSubrange:
     def testGettingSingleValue(self):
         array = range(20)
@@ -31,7 +32,9 @@ class TestSubrange:
         range1 = structures.Subrange(array, 4, 10)
         range1[3:7] = [42, 42, 42, 42]
 
-        assert array == [0, 1, 2, 3, 4, 5, 6, 42, 42, 42, 42, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+        assert array == [0, 1, 2, 3, 4, 5, 6, 42, 42, 42, 42, 11, 12, 13, 14,
+                         15, 16, 17, 18, 19]
+
 
 class TestStructClass:
     def testCompactLength(self):
@@ -51,6 +54,7 @@ class TestStructClass:
             field4 = structures.StringField(15, 5)
 
         assert len(StructureUnderTest) == 20
+
 
 class TestIntFields:
     def testGettingInts(self):
@@ -127,6 +131,7 @@ class TestIntFields:
         assert array[2] == 60
         assert array[3] == 70
 
+
 class TestRawField:
     def testGettingRawField(self):
         class StructureUnderTest(structures.StructTemplate):
@@ -156,6 +161,7 @@ class TestRawField:
         assert array[4] == 43
         assert array[5] == 5
 
+
 class TestStringfield:
     def testGettingStringField(self):
         class StructureUnderTest(structures.StructTemplate):
@@ -179,4 +185,3 @@ class TestStringfield:
         assert struct.s1 == 5*"\0"
         assert struct.s1[0] == "\0"
         assert struct.s2 == "\0"
-

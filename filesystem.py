@@ -1,5 +1,6 @@
 import os
 
+
 class FileInfo:
     def __init__(self):
         self.filename = ""
@@ -14,6 +15,7 @@ class FileInfo:
         self.start_byte = 0
         # size of the file in bytes
         self.size = 0
+
 
 class FileHandle:
     def __init__(self):
@@ -34,8 +36,8 @@ class FileHandle:
 
     def write(self, s):
         pass
-    
+
+
 class Filesystem:
     def open(self, fname, mode):
         pass
-

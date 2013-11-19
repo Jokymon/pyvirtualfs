@@ -18,37 +18,44 @@ class Field(object):
     def __set__(self, instance, value):
         self.validate_set_value(value)
         powers = []
-        while value!=0:
-            powers.append( int(value % 256) )
+        while value != 0:
+            powers.append(int(value % 256))
             value /= 256
-        powers.extend( self.size*[0] )
+        powers.extend(self.size*[0])
         start = instance.start_offset + self.start
 
         instance.array[start:start+self.size] = powers[0:self.size]
+
 
 class Int8Field(Field):
     def __init__(self, start):
         Field.__init__(self, start, 1)
 
+
 class UInt8Field(Field):
     def __init__(self, start):
         Field.__init__(self, start, 1)
+
 
 class Int16Field(Field):
     def __init__(self, start):
         Field.__init__(self, start, 2)
 
+
 class UInt16Field(Field):
     def __init__(self, start):
         Field.__init__(self, start, 2)
+
 
 class Int32Field(Field):
     def __init__(self, start):
         Field.__init__(self, start, 4)
 
+
 class UInt32Field(Field):
     def __init__(self, start):
         Field.__init__(self, start, 4)
+
 
 class StringField(Field):
     def __init__(self, start, length):
@@ -60,9 +67,10 @@ class StringField(Field):
         return "".join(map(chr, values))
 
     def __set__(self, instance, value):
-        assert len(value)<=self.size
+        assert len(value) <= self.size
         start = instance.start_offset + self.start
-        instance.array[start : start+len(value)] = list(map(ord, value))
+        instance.array[start:start+len(value)] = list(map(ord, value))
+
 
 class Subrange(object):
     """A sub range behaves like a list. It returns and modifies the values of
@@ -76,16 +84,19 @@ class Subrange(object):
         return self.length
 
     def __getitem__(self, key):
-        if type(key)==slice:
-            return self.array[ self.start_offset + key.start : self.start_offset + key.stop ]
+        if type(key) == slice:
+            return self.array[self.start_offset + key.start:
+                              self.start_offset + key.stop]
         else:
-            return self.array[ self.start_offset + key ]
+            return self.array[self.start_offset + key]
 
     def __setitem__(self, key, value):
-        if type(key)==slice:
-            self.array[ self.start_offset + key.start : self.start_offset + key.stop ] = value
+        if type(key) == slice:
+            self.array[self.start_offset + key.start:
+                       self.start_offset + key.stop] = value
         else:
-            self.array[ self.start_offset + key ] = value
+            self.array[self.start_offset + key] = value
+
 
 class RawField(Field):
     def __init__(self, start, size):
@@ -93,10 +104,12 @@ class RawField(Field):
         self.size = size
 
     def __get__(self, instance, owner):
-        return Subrange(instance.array, instance.start_offset + self.start, self.size)
+        return Subrange(instance.array, instance.start_offset + self.start,
+                        self.size)
 
     def __set__(self, instance, value):
         raise ValueError("Cannot set a raw type field directly")
+
 
 class NestedStructField(Field):
     def __init__(self, start, nested_structure_type):
@@ -109,11 +122,13 @@ class NestedStructField(Field):
     def __set__(self, instance, value):
         raise ValueError("Cannot set a nested structure")
 
+
 class ClassWithLengthMetaType(type):
     def __len__(self):
         return self.clslength()
 
 ClassWithLength = ClassWithLengthMetaType('ClassWithLength', (object, ), {})
+
 
 class StructTemplate(ClassWithLength):
     def __init__(self, array, start_offset):
@@ -130,4 +145,3 @@ class StructTemplate(ClassWithLength):
 
     def __len__(self):
         return len(self.__class__)
-

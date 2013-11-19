@@ -1,6 +1,7 @@
 import sys
 from tools import *
 
+
 class Ext2Filesystem:
     def __init__(self, partition):
         self.partition = partition
@@ -11,5 +12,3 @@ class Ext2Filesystem:
     def dump(self, fd=sys.stdout):
         fd.write("Number of INodes: %u\n" % self.s_inodes_count)
         fd.write("Number of Blocks: %u\n" % self.s_blocks_count)
-
-

@@ -1,5 +1,6 @@
 from command_tools import *
 
+
 class TestCommandTools:
     def test_command_wrapper(self):
         @command
@@ -8,4 +9,5 @@ class TestCommandTools:
             pass
 
         assert iscommand(wrapped_function)
-        assert wrapped_function.__doc__ == "Testdocumentation of command wrapped_function"
+        assert wrapped_function.__doc__ == \
+            "Testdocumentation of command wrapped_function"
