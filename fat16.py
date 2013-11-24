@@ -51,6 +51,7 @@ class FAT16FileHandle(filesystem.FileHandle):
         filesystem.FileHandle.__init__(self)
         self._fat16 = fat16
         self._fileinfo = fileinfo
+        self._currentpos = 0
         # collect the clusters for this file
         self._clusters = []
         cl = self._fileinfo.start_cluster
@@ -99,7 +100,16 @@ class FAT16FileHandle(filesystem.FileHandle):
         pass
 
     def write(self, s):
-        pass
+        fat16 = self._fat16
+        assert self._currentpos == 0
+        assert len(s) < fat16.info.sectors_per_cluster * fat16.info.bytes_per_sector
+        cluster = fat16._allocate_cluster()
+        fat16.set_fat_entry(cluster, FAT16_CLUSTER_END_OF_CHAIN)
+        self._fileinfo.start_cluster = cluster
+
+        start_byte = fat16.get_start_byte_from_cluster(cluster)
+        fat16.partition[start_byte:start_byte+len(s)] = string2list(s)
+        self._fileinfo.file_size = len(s)
 
 
 class FAT16Filesystem:
@@ -107,10 +117,6 @@ class FAT16Filesystem:
         self.partition = partition
 
         self.info = FAT16Structure(self.partition, 0)
-
-        # calculate the byte address of cluster 2
-        self.start_of_data = self.get_root_directory_address() + \
-            self.info.max_root_dir_entries * len(FAT16DirectoryEntry)
 
     def dump(self, fd=sys.stdout):
         fd.write("Content of the FAT:\n")
@@ -123,7 +129,7 @@ class FAT16Filesystem:
         fd.write("Sectors per FAT: %u\n" % self.info.sectors_per_fat)
         fd.write("Maximum number of root directory entries: %u\n" %
                  self.info.max_root_dir_entries)
-        fd.write("Start byte of data: %u\n" % self.start_of_data)
+        fd.write("Start byte of data: %u\n" % self.get_start_of_data())
 
         entries = self._listdir(self.get_root_directory_address())
         fd.write("Files: %s\n" % list(entries.keys()))
@@ -146,10 +152,16 @@ class FAT16Filesystem:
         self.partition[fat_start + fat_entry*2: fat_start+fat_entry*2 + 2] = \
             word2list(value)
 
+    def get_start_of_data(self):
+        """Calculate the byte address of cluster 2"""
+        start = self.get_root_directory_address()
+        start += self.info.max_root_dir_entries * len(FAT16DirectoryEntry)
+        return start
+
     def get_start_byte_from_cluster(self, cluster):
         """calculate the start byte of the given cluster number inside the
         partition containing this file system"""
-        start_byte = self.start_of_data
+        start_byte = self.get_start_of_data()
         start_byte += (cluster-2) * self.info.sectors_per_cluster * \
             self.info.bytes_per_sector
         return start_byte
@@ -208,7 +220,7 @@ class FAT16Filesystem:
 
     def format(self, oem_name="", bytes_per_sector=512,
                sectors_per_cluster=4, reserved_sectors=2, number_of_fats=1,
-               sectors_per_fat=8):
+               sectors_per_fat=8, max_root_dir_entries=32):
         self.info.jump_code[0:3] = [0xEB, 0x3C, 0x90]
         self.info.oem_name = oem_name
         self.info.bytes_per_sector = bytes_per_sector
@@ -216,6 +228,7 @@ class FAT16Filesystem:
         self.info.reserved_sectors = reserved_sectors
         self.info.number_of_fats = number_of_fats
         self.info.sectors_per_fat = sectors_per_fat
+        self.info.max_root_dir_entries = max_root_dir_entries
 
     def listdir(self, path):
         entries = self._listdir(self.get_root_directory_address())

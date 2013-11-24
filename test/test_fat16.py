@@ -49,7 +49,10 @@ class TestFileSystemAPI:
 
     def testOpenForReadExistingFile(self, formatted_partition):
         handle = formatted_partition.open("somefile.txt", "w")
+        handle.write("abcdefghijklmnopqrstuvw")
         handle.close()
 
         handle = formatted_partition.open("somefile.txt", "r")
         assert handle is not None
+        data = handle.read()
+        assert data == "abcdefghijklmnopqrstuvw"
