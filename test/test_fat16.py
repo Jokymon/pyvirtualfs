@@ -56,3 +56,22 @@ class TestFileSystemAPI:
         assert handle is not None
         data = handle.read()
         assert data == "abcdefghijklmnopqrstuvw"
+
+    def testMultipleWriteOperations(self, formatted_partition):
+        handle = formatted_partition.open("somefile.txt", "w")
+        handle.write("1234567890")
+        handle.write("abcdefghijklmnop")
+        handle.close()
+
+        handle = formatted_partition.open("somefile.txt", "r")
+        assert handle.read() == "1234567890abcdefghijklmnop"
+
+    @pytest.mark.wip
+    def testWriteMoreThanOneCluster(self, formatted_partition):
+        handle = formatted_partition.open("somefile.txt", "w")
+        handle.write(3000 * "z")
+        handle.close()
+
+        handle = formatted_partition.open("somefile.txt", "r")
+        data = handle.read()
+        assert data == 3000*"z"

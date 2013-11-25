@@ -59,6 +59,18 @@ class FAT16FileHandle(filesystem.FileHandle):
             self._clusters.append(cl)
             cl = self._fat16.get_fat_entry(0, cl)
 
+    def _extend_cluster_chain(self):
+        """Extend the current chain of clusters but one additional cluster to
+        have more space for additional data"""
+        new_cluster = self._fat16._allocate_cluster()
+        self._fat16.set_fat_entry(new_cluster, FAT16_CLUSTER_END_OF_CHAIN)
+        if self._clusters == []:
+            self._fileinfo.start_cluster = new_cluster
+        else:
+            last_cluster = self._clusters[-1]
+            self._fat16.set_fat_entry(last_cluster, new_cluster)
+        self._clusters.append(new_cluster)
+
     def close(self):
         pass
 
@@ -101,15 +113,21 @@ class FAT16FileHandle(filesystem.FileHandle):
 
     def write(self, s):
         fat16 = self._fat16
-        assert self._currentpos == 0
-        assert len(s) < fat16.info.sectors_per_cluster * fat16.info.bytes_per_sector
-        cluster = fat16._allocate_cluster()
-        fat16.set_fat_entry(cluster, FAT16_CLUSTER_END_OF_CHAIN)
-        self._fileinfo.start_cluster = cluster
+        clustersize = fat16.info.sectors_per_cluster * \
+            fat16.info.bytes_per_sector
+        assert self._currentpos + len(s) < clustersize
 
-        start_byte = fat16.get_start_byte_from_cluster(cluster)
+        if len(self._clusters) == 0:
+            self._extend_cluster_chain()
+
+        (cluster_index, pos_in_cluster) = \
+            fat16.get_cluster_pos(self._currentpos)
+        start_byte = fat16.get_start_byte_from_cluster(
+            self._clusters[cluster_index])
+        start_byte += pos_in_cluster
         fat16.partition[start_byte:start_byte+len(s)] = string2list(s)
-        self._fileinfo.file_size = len(s)
+        self._fileinfo.file_size += len(s)
+        self._currentpos += len(s)
 
 
 class FAT16Filesystem:
