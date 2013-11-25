@@ -72,12 +72,24 @@ if sys.version_info[0] >= 3:
 
     def intlist2mmap(l):
         return bytes(l)
+
+    def mmap2int(value):
+        return value
+
+    def int2mmap(value):
+        return value
 else:
     def mmap2intlist(m):
         return map(ord, m)
 
     def intlist2mmap(l):
         return "".join(map(chr, l))
+
+    def mmap2int(value):
+        return ord(value)
+
+    def int2mmap(value):
+        return chr(value)
 
 
 class DiskImage:
@@ -96,13 +108,13 @@ class DiskImage:
         if type(data) == slice:
             return mmap2intlist(data)
         else:
-            return data
+            return mmap2int(data)
 
     def __setitem__(self, index, value):
         if type(value) == list:
             self._mmap.__setitem__(index, intlist2mmap(value))
         else:
-            self._mmap.__setitem__(index, value)
+            self._mmap.__setitem__(index, mmap2int(value))
 
 ##############################################################################
 
