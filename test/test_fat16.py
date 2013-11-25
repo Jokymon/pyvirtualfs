@@ -66,7 +66,6 @@ class TestFileSystemAPI:
         handle = formatted_partition.open("somefile.txt", "r")
         assert handle.read() == "1234567890abcdefghijklmnop"
 
-    @pytest.mark.wip
     def testWriteMoreThanOneCluster(self, formatted_partition):
         handle = formatted_partition.open("somefile.txt", "w")
         handle.write(3000 * "z")

@@ -57,10 +57,10 @@ class FAT16FileHandle(filesystem.FileHandle):
         cl = self._fileinfo.start_cluster
         while cl >= 2 and cl <= FAT16_CLUSTER_HIGHEST:
             self._clusters.append(cl)
-            cl = self._fat16.get_fat_entry(0, cl)
+            cl = self._fat16.get_fat_entry(cl)
 
     def _extend_cluster_chain(self):
-        """Extend the current chain of clusters but one additional cluster to
+        """Extend the current chain of clusters by one additional cluster to
         have more space for additional data"""
         new_cluster = self._fat16._allocate_cluster()
         self._fat16.set_fat_entry(new_cluster, FAT16_CLUSTER_END_OF_CHAIN)
@@ -80,10 +80,8 @@ class FAT16FileHandle(filesystem.FileHandle):
 
         fat16 = self._fat16
         data = ""
-        pos_in_cluster = self._currentpos % \
-            (fat16.info.sectors_per_cluster*512)
-        cluster_index = int(self._currentpos /
-                            (fat16.info.sectors_per_cluster*512))
+        (cluster_index, pos_in_cluster) = \
+            fat16.get_cluster_pos(self._currentpos)
         # TODO: also add an upper bound for the actual size of the file
         # Here we only read as much data until the boundary of the current
         # cluster
@@ -97,10 +95,8 @@ class FAT16FileHandle(filesystem.FileHandle):
 
             # update the current position
             self._currentpos += readsize
-            pos_in_cluster = self._currentpos % \
-                (fat16.info.sectors_per_cluster*512)
-            cluster_index = self._currentpos / \
-                (fat16.info.sectors_per_cluster*512)
+            (cluster_index, pos_in_cluster) = \
+                fat16.get_cluster_pos(self._currentpos)
             # calculate the next chunk
             size -= readsize
             readsize = min(fat16.info.sectors_per_cluster*512 - pos_in_cluster,
@@ -115,19 +111,22 @@ class FAT16FileHandle(filesystem.FileHandle):
         fat16 = self._fat16
         clustersize = fat16.info.sectors_per_cluster * \
             fat16.info.bytes_per_sector
-        assert self._currentpos + len(s) < clustersize
 
-        if len(self._clusters) == 0:
-            self._extend_cluster_chain()
+        while len(s) > 0:
+            (cluster_index, pos_in_cluster) = \
+                fat16.get_cluster_pos(self._currentpos)
+            if cluster_index >= len(self._clusters):
+                self._extend_cluster_chain()
 
-        (cluster_index, pos_in_cluster) = \
-            fat16.get_cluster_pos(self._currentpos)
-        start_byte = fat16.get_start_byte_from_cluster(
-            self._clusters[cluster_index])
-        start_byte += pos_in_cluster
-        fat16.partition[start_byte:start_byte+len(s)] = string2list(s)
-        self._fileinfo.file_size += len(s)
-        self._currentpos += len(s)
+            write_size = min(clustersize - pos_in_cluster, len(s))
+            start_byte = fat16.get_start_byte_from_cluster(
+                self._clusters[cluster_index])
+            start_byte += pos_in_cluster
+
+            fat16.partition[start_byte:start_byte+write_size] = string2list(s[:write_size])
+            s = s[write_size:]
+            self._currentpos += write_size
+        self._fileinfo.file_size = max(self._fileinfo.file_size, self._currentpos)
 
 
 class FAT16Filesystem:
