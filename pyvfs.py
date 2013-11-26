@@ -1,5 +1,7 @@
 import string
 from command_tools import command, CommandInterpreter
+from physical import DiskImage, createPhysicalImageFromImageType
+from image_path import ImagePath
 
 
 class PyvfsCommandInterpreter(CommandInterpreter):
@@ -56,13 +58,9 @@ class PyvfsCommandInterpreter(CommandInterpreter):
         The amount of details can be controlled with the l<number> parameter.
         1  Show details about the image
         2  Show a first level of details for all contained file systems."""
-
-        from image_path import ImagePath
         img_path = ImagePath.parse(parameters[0])
 
         level = int(parameters[1][1:])
-
-        from physical import DiskImage, createPhysicalImageFromImageType
 
         image = DiskImage(img_path.imagefile, "a")
         phys = createPhysicalImageFromImageType(img_path.imagetype, image)
