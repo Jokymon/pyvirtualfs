@@ -47,7 +47,12 @@ class PyvfsCommandInterpreter(CommandInterpreter):
     @command
     def mkfs(self, parameters):
         """Create file systems in existing partitions"""
-        pass
+        img_path = ImagePath.parse(parameters[0])
+
+        image = DiskImage(img_path.imagefile, "a")
+        phys = createPhysicalImageFromImageType(img_path.imagetype, image)
+        filesystem = phys.get_filesystem(img_path.partition)
+        filesystem.format()
 
     @command
     def dump(self, parameters):

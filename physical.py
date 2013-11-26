@@ -179,6 +179,8 @@ class Harddisk:
         return Partition(self._image, pi)
 
     def get_filesystem(self, partition_number):
+        # TODO: get_filesystem should be available for all physical disks
+        # created by createPhysicalImageFromImageType --> make an interface
         pi = self.get_partition_info(partition_number)
         if pi.type == 6:
             from fat16 import FAT16Filesystem
