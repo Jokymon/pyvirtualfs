@@ -71,6 +71,31 @@ class PyvfsCommandInterpreter(CommandInterpreter):
         phys = createPhysicalImageFromImageType(img_path.imagetype, image)
         phys.dump(level=level)
 
+    @command
+    def copy(self, parameters):
+        """Copy a file from or to a location inside an image"""
+        if len(parameters) != 2:
+            print("Source and destination file are required")
+            return
+        # for the moment only allow copying from a real file to a location in
+        # an image file
+        source_file = open(parameters[0], "rb")
+        if sys.version_info[0] >= 3:
+            source_data = source_file.read().decode()
+        else:
+            source_data = source_file.read()
+        source_file.close()
+
+        img_path = ImagePath.parse(parameters[1])
+
+        image = DiskImage(img_path.imagefile, "a")
+        phys = createPhysicalImageFromImageType(img_path.imagetype, image)
+        filesystem = phys.get_filesystem(img_path.partition)
+
+        target_file = filesystem.open(img_path.filepath, "w")
+        target_file.write(source_data)
+        target_file.close()
+
     from commands import FdiskCommand
     fdisk = FdiskCommand()
 
