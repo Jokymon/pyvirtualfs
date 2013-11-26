@@ -253,6 +253,9 @@ class FAT16Filesystem:
 
     def open(self, fname, mode="r"):
         fname = fname.upper()
+        if fname.startswith("/"):
+            fname = fname[1:]
+            # TODO: handle absolute and relative paths differently
         path_elements = fname.split("/")
         entries = self._listdir(self.get_root_directory_address())
         for dname in path_elements[:-1]:

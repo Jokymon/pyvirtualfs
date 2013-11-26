@@ -74,3 +74,11 @@ class TestFileSystemAPI:
         handle = formatted_partition.open("somefile.txt", "r")
         data = handle.read()
         assert data == 3000*"z"
+
+    def testWriteToFileInRootDirectory(self, formatted_partition):
+        handle = formatted_partition.open("/somefile.txt", "w")
+        handle.close()
+
+        handle = formatted_partition.open("/somefile.txt", "r")
+        handle.close()
+        # assert no exceptions should occur during these operations
