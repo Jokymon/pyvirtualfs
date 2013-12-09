@@ -28,6 +28,7 @@ class FAT16Structure(structures.StructTemplate):
     number_of_fats          = structures.UInt8Field(16)
     max_root_dir_entries    = structures.UInt16Field(17)
     sectors_per_fat         = structures.UInt16Field(22)
+    signature               = structures.RawField(510, 2)
 
 
 class FAT16DirectoryEntry(structures.StructTemplate):
@@ -246,6 +247,7 @@ class FAT16Filesystem:
         self.info.number_of_fats = number_of_fats
         self.info.sectors_per_fat = sectors_per_fat
         self.info.max_root_dir_entries = max_root_dir_entries
+        self.info.signature[0:2] = [0x55, 0xaa]
 
     def listdir(self, path):
         entries = self._listdir(self.get_root_directory_address())
