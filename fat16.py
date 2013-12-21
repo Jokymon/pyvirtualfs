@@ -27,6 +27,7 @@ class FAT16Structure(structures.StructTemplate):
     reserved_sectors        = structures.UInt16Field(14)
     number_of_fats          = structures.UInt8Field(16)
     max_root_dir_entries    = structures.UInt16Field(17)
+    total_logical_sectors   = structures.UInt16Field(19)
     sectors_per_fat         = structures.UInt16Field(22)
     signature               = structures.RawField(510, 2)
 
@@ -144,6 +145,8 @@ class FAT16Filesystem:
         fd.write("Sectors per cluster: %u\n" % self.info.sectors_per_cluster)
         fd.write("Reserved sectors: %u\n" % self.info.reserved_sectors)
         fd.write("Number of FATs: %u\n" % self.info.number_of_fats)
+        fd.write("Total number of sectors: %u\n" %
+                 self.info.total_logical_sectors)
         fd.write("Sectors per FAT: %u\n" % self.info.sectors_per_fat)
         fd.write("Maximum number of root directory entries: %u\n" %
                  self.info.max_root_dir_entries)
@@ -245,6 +248,7 @@ class FAT16Filesystem:
         self.info.sectors_per_cluster = sectors_per_cluster
         self.info.reserved_sectors = reserved_sectors
         self.info.number_of_fats = number_of_fats
+        self.info.total_logical_sectors = len(self.partition)/bytes_per_sector
         self.info.sectors_per_fat = sectors_per_fat
         self.info.max_root_dir_entries = max_root_dir_entries
         self.info.signature[0:2] = [0x55, 0xaa]

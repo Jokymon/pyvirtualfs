@@ -2,6 +2,7 @@ import pytest
 import image_path
 from physical import *
 from iso9660 import *
+from tools import *
 
 
 class TestPhysicalFactory:
@@ -25,3 +26,13 @@ class TestPhysicalFactory:
             image_path.ImagePath.IMAGE_TYPE_CDROM,
             image)
         assert isinstance(phys, CdRom)
+
+
+class TestPartition:
+    def testPartitionLength(self):
+        # TODO: clear hint that we should make the creation of PartitionInfos
+        # easier
+        pi_data = 12*[0] + dword2list(1000)
+        pi = PartitionInfo(pi_data)
+        partition = Partition([], pi)
+        assert 512000 == len(partition)

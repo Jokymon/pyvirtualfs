@@ -63,6 +63,9 @@ class Partition:
         else:
             self._image[self.start_byte + key] = value
 
+    def __len__(self):
+        return 512*self.partition_info.sectors_in_partition
+
 ##############################################################################
 
 import sys
