@@ -125,10 +125,12 @@ class FAT16FileHandle(filesystem.FileHandle):
                 self._clusters[cluster_index])
             start_byte += pos_in_cluster
 
-            fat16.partition[start_byte:start_byte+write_size] = string2list(s[:write_size])
+            fat16.partition[start_byte:start_byte+write_size] = \
+                string2list(s[:write_size])
             s = s[write_size:]
             self._currentpos += write_size
-        self._fileinfo.file_size = max(self._fileinfo.file_size, self._currentpos)
+        self._fileinfo.file_size = max(self._fileinfo.file_size,
+                                       self._currentpos)
 
 
 class FAT16Filesystem:
