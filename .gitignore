@@ -8,3 +8,6 @@
 # Coverage
 .coverage
 htmlcov/
+
+# py.test files
+.cache
