@@ -81,7 +81,7 @@ class PyvfsCommandInterpreter(CommandInterpreter):
         # an image file
         source_file = open(parameters[0], "rb")
         if sys.version_info[0] >= 3:
-            source_data = source_file.read().decode()
+            source_data = source_file.read().decode("latin-1")
         else:
             source_data = source_file.read()
         source_file.close()
