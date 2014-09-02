@@ -1,6 +1,11 @@
 import os
 import sys
-from tools import *
+import mmap
+from pyvirtualfs.tools import *
+from pyvirtualfs.iso9660 import *
+from pyvirtualfs.fat16 import FAT16Filesystem
+from pyvirtualfs.ext2 import Ext2Filesystem
+from pyvirtualfs.image_path import ImagePath
 
 
 class PartitionInfo:
@@ -68,7 +73,6 @@ class Partition:
 
 ##############################################################################
 
-import sys
 if sys.version_info[0] >= 3:
     def mmap2intlist(m):
         return list(map(lambda x: x, m))
@@ -101,7 +105,6 @@ class DiskImage:
         if not mode in ["r", "a"]:
             raise ValueError(
                 "mode string must be one of 'r', 'a', not '%s'" % mode)
-        import mmap
         self._image = open(file_name, mode+"+b")
         mmap_access = {"r": mmap.ACCESS_READ, "a": mmap.ACCESS_WRITE}[mode]
         self._mmap = mmap.mmap(self._image.fileno(), 0, access=mmap_access)
@@ -186,19 +189,16 @@ class Harddisk:
         # created by createPhysicalImageFromImageType --> make an interface
         pi = self.get_partition_info(partition_number)
         if pi.type == 6:
-            from fat16 import FAT16Filesystem
             return FAT16Filesystem(self.get_partition(partition_number))
         elif pi.type == 0x83:
             # TODO 0x83 is official not always just Ext2, need a cleverer
             # detection
-            from ext2 import Ext2Filesystem
             return Ext2Filesystem(self.get_partition(partition_number))
         else:
             raise UnknownFileSystem(
                 "No filesystem implementation for type %x" % pi.type)
 
 #-----------------------------------------------------------------------------
-from iso9660 import *
 
 
 class VolumeDescriptor:
@@ -289,7 +289,6 @@ def createPhysicalImageFromImageType(imagetype, image):
     """Create a physical representation of the given disk image based on the
     indicated imagetype. For example from image type 'hd' a Harddisk object is
     created."""
-    from image_path import ImagePath
     if imagetype == ImagePath.IMAGE_TYPE_HD:
         return Harddisk(image)
     elif imagetype == ImagePath.IMAGE_TYPE_CDROM:

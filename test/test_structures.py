@@ -1,5 +1,5 @@
 import pytest
-import structures
+from pyvirtualfs import structures
 
 
 class TestSubrange:

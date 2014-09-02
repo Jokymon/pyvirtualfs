@@ -1,4 +1,4 @@
-from command_tools import *
+from pyvirtualfs.command_tools import *
 
 
 class TestCommandTools:

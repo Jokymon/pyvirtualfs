@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import string
 from command_tools import command, CommandInterpreter
 from physical import DiskImage, createPhysicalImageFromImageType

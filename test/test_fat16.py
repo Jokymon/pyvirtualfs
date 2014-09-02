@@ -1,5 +1,5 @@
 import pytest
-from fat16 import *
+from pyvirtualfs.fat16 import *
 
 
 @pytest.fixture

@@ -1,5 +1,5 @@
 import sys
-from tools import *
+from pyvirtualfs.tools import *
 
 
 class Ext2Filesystem:

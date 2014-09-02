@@ -1,8 +1,8 @@
 import mmap
 import os
 import pytest
-import structures
-from physical import DiskImage
+from pyvirtualfs import structures
+from pyvirtualfs.physical import DiskImage
 
 
 class StructureUnderTest(structures.StructTemplate):

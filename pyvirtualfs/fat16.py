@@ -1,8 +1,8 @@
-import filesystem
 import os
 import sys
-from tools import *
-import structures
+from pyvirtualfs import filesystem
+from pyvirtualfs.tools import *
+from pyvirtualfs import structures
 
 FAT16_CLUSTER_FREE = 0x0
 FAT16_CLUSTER_RESERVED = 0x1

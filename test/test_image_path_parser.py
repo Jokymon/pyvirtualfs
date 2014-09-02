@@ -1,5 +1,5 @@
 import pytest
-import image_path
+from pyvirtualfs import image_path
 
 
 class TestImagePathParser:

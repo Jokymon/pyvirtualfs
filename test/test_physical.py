@@ -1,8 +1,8 @@
 import pytest
-import image_path
-from physical import *
-from iso9660 import *
-from tools import *
+from pyvirtualfs import image_path
+from pyvirtualfs.physical import *
+from pyvirtualfs.iso9660 import *
+from pyvirtualfs.tools import *
 
 
 class TestPhysicalFactory:
