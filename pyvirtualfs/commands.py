@@ -1,4 +1,4 @@
-from command_tools import command, CommandInterpreter
+from pyvirtualfs.command_tools import command, CommandInterpreter
 
 
 class CreateCommand:
@@ -23,7 +23,7 @@ class FdiskCommand(CommandInterpreter):
         CommandInterpreter.__init__(self)
 
     def execute(self, parameters):
-        from image_path import ImagePath
+        from pyvirtualfs.image_path import ImagePath
         img_path = ImagePath.parse(parameters[0])
 
     @command
@@ -38,8 +38,8 @@ class FdiskCommand(CommandInterpreter):
         sectors_per_track = 63
         heads_per_cluster = 16
 
-        from image_path import ImagePath, PathParseError
-        from tools import int_ex
+        from pyvirtualfs.image_path import ImagePath, PathParseError
+        from pyvirtualfs.tools import int_ex
         try:
             image_url = ImagePath.parse(parameters[0])
         except PathParseError as p:
@@ -74,8 +74,8 @@ class FdiskCommand(CommandInterpreter):
             print("Need a type for this partition")
             return
 
-        from physical import DiskImage, Harddisk
-        from tools import lba2chs
+        from pyvirtualfs.physical import DiskImage, Harddisk
+        from pyvirtualfs.tools import lba2chs
 
         assert image_url.imagetype == ImagePath.IMAGE_TYPE_HD
         image = DiskImage(image_url.imagefile, "a")
