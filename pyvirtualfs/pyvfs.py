@@ -41,7 +41,7 @@ class PyvfsCommandInterpreter(CommandInterpreter):
             return
         filename = parameters[0]
         size = parse_size(parameters[1])
-        from commands import CreateCommand
+        from pyvirtualfs.commands import CreateCommand
         cmd = CreateCommand(filename, size)
         cmd.execute()
 
