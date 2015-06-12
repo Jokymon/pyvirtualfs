@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import string
+import sys
 from pyvirtualfs.command_tools import command, CommandInterpreter
 from pyvirtualfs.physical import DiskImage, createPhysicalImageFromImageType
 from pyvirtualfs.image_path import ImagePath
@@ -101,8 +102,6 @@ class PyvfsCommandInterpreter(CommandInterpreter):
     fdisk = FdiskCommand()
 
 def main():
-    import sys
-
     cmd_interpreter = PyvfsCommandInterpreter()
     cmd_interpreter.interprete(sys.argv[1:])
 
